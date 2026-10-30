@@ -39,3 +39,11 @@ GitHub Pages sirve la portada estática; no ejecuta Python. El despliegue de Str
 El autor declara apoyo de ChatGPT y Gemini para código y estructura. ChatGPT/Codex apoyó esta integración, el FIS, la interfaz y las pruebas. No se atribuye a Gemini validación de esta versión. El programa no llama modelos generativos.
 
 Prototipo educativo sin calibración con datos, auditoría de equidad ni validación para crédito real. Edad y antigüedad conservan criterios del notebook que deben revisarse antes de cualquier uso real. No introducir datos personales reales. La sesión mantiene la evaluación en memoria y permite descargarla; no se utiliza base de datos.
+
+## Interfaz adaptativa y rendimiento
+
+La apariencia se selecciona en la barra lateral: Automático sigue `prefers-color-scheme` del sistema, Oscuro y Claro fijan la paleta. Los colores de superficies, textos y controles se adaptan juntos. Se usan fuentes del sistema, foco visible, controles de al menos 44 px, cifras tabulares y transiciones cortas desactivadas con `prefers-reduced-motion`. Las decisiones incluyen texto e iconos y no dependen solo del color.
+
+Los campos se confirman con Enter o al perder el foco. Score admite enteros y endeudamiento dos decimales; ya no hay sliders. El FIS se recalcula al confirmar cada ajuste. La generación evolutiva se solicita con **Generar contraoferta** y se almacena en caché para hasta 64 perfiles. Si cambia cualquier dato, desaparece la oferta anterior. La trazabilidad y la gráfica se construyen solo cuando se activan sus controles; no hay fuentes, imágenes ni scripts remotos añadidos por la interfaz.
+
+Medición local con Streamlit AppTest (Python 3.12): primera ejecución incluyendo imports 0.393 s; mediana de cinco cambios de score 0.016 s (máximo 0.016 s); búsqueda evolutiva más render 0.293 s. Salud HTTP: `ok`. Estos tiempos miden ejecución local, no carga visual en un navegador ni latencia de Community Cloud. El objetivo de carga inferior a 2.5 s debe verificarse en el despliegue público; los arranques tras reposo y la red pueden superarlo. No se pudo ejecutar una inspección visual automatizada porque la descarga del navegador fue bloqueada por la política de red.
