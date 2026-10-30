@@ -1,6 +1,6 @@
 # Credi Logic AI
 
-Aplicación académica Streamlit que integra los notebooks originales de los sprints 2 y 3 y un nuevo FIS Sugeno. El Sprint 1 no forma parte de la aplicación.
+Aplicación académica Streamlit que integra los notebooks originales de los sprints 2, 3 y 4 y el FIS Mamdani del Sprint 4. El Sprint 1 no forma parte de la aplicación.
 
 ## Ejecución
 
@@ -19,9 +19,15 @@ python -m venv .venv
 
 ## Modelo
 
-`riesgo.motor_inferencia(cliente)` mantiene el retorno `(DECISIÓN, EXPLICACIÓN)`. La decisión usa el riesgo sin redondear: APROBADO ≤35, RECHAZADO ≥65, REVISIÓN entre ambos. El FIS sustituye las clasificaciones rígidas de score, deuda y capacidad. Las 27 reglas Sugeno usan AND producto, consecuentes constantes y media ponderada. Los puntos de pertenencia son score 500/650/800, deuda 30/50/70 %, cuota/ingreso 20/30/40 %. Los niveles 0/1/2 producen `10+40*(.35*(2-score)+.25*deuda+.40*cuota)`. Estabilidad media añade 5 y baja 10, un reporte añade 10, dos o más imponen riesgo mínimo 65. Se limita a 100. No es una probabilidad calibrada.
+`riesgo.motor_inferencia(cliente)` mantiene el retorno `(DECISIÓN, EXPLICACIÓN)`. `motor_sprint4.py` conserva las funciones, pertenencias, 27 reglas explícitas e inferencia del notebook Sprint-4, sin ejecutar su entrada interactiva ni sus gráficos. El FIS es Mamdani: AND mínimo, recorte de salida, agregación máximo y centroide con `np.trapezoid` sobre 1001 puntos entre 0 y 100. NumPy 2 o superior es necesario.
 
-`evolucion.py` conserva las funciones de cuotas, estabilidad, fitness, utilidades, mutación, reparación y selección del Sprint 3. La interfaz usa semilla 42, μ=6, λ=12 y 50 generaciones. Solo se ejecuta para REVISIÓN. El monto queda entre 70 y 100 % del original, el plazo entre el original y 240 meses completos. Las ofertas se reevalúan con el FIS; una alternativa no aprobada se indica expresamente. La búsqueda no garantiza óptimo ni factibilidad. El endeudamiento actual y la cuota nueva son entradas separadas, tal como en el notebook.
+La decisión financiera es APROBADO si índice ≤35, RECHAZADO si índice ≥65 y REVISIÓN entre ambos. El sistema experto conserva las restricciones: dos o más reportes fuerzan rechazo; un reporte o estabilidad MEDIA/BAJA pueden convertir aprobación en revisión y exigen validación personal. Estas condiciones no suman puntos al índice. El adaptador separa `decision_financiera`, `revision_manual`, `motivos_revision` y `ejecutar_evolutiva` de la decisión final.
+
+La estrategia se ejecuta automáticamente si **35 < índice difuso < 65**, incluso con revisión personal pendiente. La caché y el estado evitan repetirla para el mismo perfil; el botón existente reutiliza el resultado. No se activa por una revisión exclusivamente personal con riesgo ≤35. Según la condición financiera solicitada, también puede buscar alternativas si el índice está en el intervalo aunque el rechazo experto por dos reportes persista: ninguna contraoferta elimina esa restricción.
+
+`evolucion.py` conserva la búsqueda, cuotas, utilidades, mutación, reparación y selección del notebook; la única excepción deliberada es el fitness solicitado: la penalización es cero si el riesgo difuso de la oferta ≤35 y uno en caso contrario, independientemente de la revisión personal. Semilla 42, μ=6, λ=12 y 50 generaciones; monto 70–100 % del original y plazo original–240 meses completos. Una oferta financieramente viable con revisión personal pendiente se anuncia como sujeta a validación de un funcionario. No se garantiza óptimo ni factibilidad.
+
+**Comportamiento heredado que se conserva:** `np.interp` con extremos repetidos produce pertenencia cero en algunos límites, como score 1000 y endeudamiento 100 %. Las cuotas/ingresos superiores al universo también pueden dejar todas las reglas inactivas. En esos casos el notebook devuelve **50**, y esta integración hace lo mismo para respetar la equivalencia. No se corrigieron silenciosamente estos casos ni los límites de plazo del algoritmo.
 
 Los notebooks se preservan en `notebooks/`. Sus programas interactivos no se ejecutan al importar la aplicación.
 
@@ -44,9 +50,9 @@ Prototipo educativo sin calibración con datos, auditoría de equidad ni validac
 
 La apariencia se selecciona en la barra lateral: Automático sigue `prefers-color-scheme` del sistema, Oscuro y Claro fijan la paleta. Los colores de superficies, textos y controles se adaptan juntos. Se usa Nunito local con respaldo de fuentes del sistema, foco visible, controles de al menos 44 px, cifras tabulares y transiciones cortas desactivadas con `prefers-reduced-motion`. Las decisiones incluyen texto e iconos y no dependen solo del color.
 
-Los campos se confirman con Enter o al perder el foco. Score admite enteros y endeudamiento dos decimales; ya no hay sliders. El FIS se recalcula al confirmar cada ajuste. La generación evolutiva se solicita con **Generar contraoferta** y se almacena en caché para hasta 64 perfiles. Si cambia cualquier dato, desaparece la oferta anterior. La trazabilidad y la gráfica se construyen solo cuando se activan sus controles; no hay fuentes, imágenes ni scripts remotos añadidos por la interfaz.
+Los campos se confirman con Enter o al perder el foco. Score admite enteros y endeudamiento dos decimales; ya no hay sliders. El FIS se recalcula al confirmar cada ajuste. La generación evolutiva se activa por el intervalo de riesgo financiero y se almacena en caché para hasta 64 perfiles. Si cambia cualquier dato, se descarta la oferta anterior y se genera otra solo si corresponde. La trazabilidad y la gráfica se muestran en Cómo funciona; no hay fuentes, imágenes ni scripts remotos añadidos por la interfaz.
 
-Medición local con Streamlit AppTest (Python 3.12): primera ejecución incluyendo imports 0.393 s; mediana de cinco cambios de score 0.016 s (máximo 0.016 s); búsqueda evolutiva más render 0.293 s. Salud HTTP: `ok`. Estos tiempos miden ejecución local, no carga visual en un navegador ni latencia de Community Cloud. El objetivo de carga inferior a 2.5 s debe verificarse en el despliegue público; los arranques tras reposo y la red pueden superarlo. La inspección visual posterior se realizó con Chromium disponible en el sistema; se verificaron escritorio, móvil y movimiento reducido.
+Medición histórica del motor anterior con Streamlit AppTest (Python 3.12): primera ejecución incluyendo imports 0.393 s; mediana de cinco cambios de score 0.016 s (máximo 0.016 s); búsqueda evolutiva más render 0.293 s. Salud HTTP: `ok`. Estos tiempos miden ejecución local, no carga visual en un navegador ni latencia de Community Cloud. El objetivo de carga inferior a 2.5 s debe verificarse en el despliegue público; los arranques tras reposo y la red pueden superarlo. La inspección visual posterior se realizó con Chromium disponible en el sistema; se verificaron escritorio, móvil y movimiento reducido.
 
 
 ## Identidad y recorrido guiado
@@ -55,7 +61,7 @@ Credi Logic AI utiliza un símbolo C con nodos, azul marino `#123A60`, turquesa 
 
 El índice lateral enlaza a cinco secciones: Tu solicitud, Tu resultado, Entiende la decisión, Busca una alternativa y Compara las opciones. Todos los destinos existen incluso sin contraoferta y explican cuándo está disponible cada paso. El perfil y la alternativa se conservan al navegar a Cómo funciona y regresar. Los detalles de reglas, fitness, utilidades numéricas y convergencia están en Cómo funciona. La comparación principal muestra montos, plazos, cuotas e intereses totales; una extensión del plazo incluye una advertencia visible sobre el costo.
 
-Validación de esta versión: ocho pruebas del modelo y cinco de interfaz; comprobación en Chromium de los enlaces del índice, generación de alternativa, logo final, móvil sin desbordamiento horizontal y preferencia de movimiento reducido. Tiempo local de navegador hasta mostrar la interfaz e índice: 1.876 s; no es una medición de Community Cloud ni una garantía de carga pública. La portada de GitHub Pages también utiliza la nueva identidad.
+Validación histórica del rediseño: ocho pruebas del modelo y cinco de interfaz; comprobación en Chromium de los enlaces del índice, generación de alternativa, logo final, móvil sin desbordamiento horizontal y preferencia de movimiento reducido. Tiempo local de navegador hasta mostrar la interfaz e índice: 1.876 s; no es una medición de Community Cloud ni una garantía de carga pública. La portada de GitHub Pages también utiliza la nueva identidad.
 
 El plazo de entrada se expresa en años (por ejemplo 3.5 años = 42 meses). El motor recibe años y convierte internamente a meses para la amortización; se rechazan plazos que no equivalgan a meses completos. Las contraofertas y la comparación mantienen la duración en meses para mostrar su valor exacto.
 
@@ -63,3 +69,10 @@ El plazo de entrada se expresa en años (por ejemplo 3.5 años = 42 meses). El m
 La navegación general se encuentra debajo del recorrido, en la parte inferior de la barra lateral. La barra abierta mide 292 px y utiliza los controles nativos de Streamlit para ocultarse y expandirse; el control de cierre permanece visible y el de reapertura indica «Menú». En móvil comienza plegada y mantiene un ancho limitado al espacio disponible.
 
 Tipografía: Nunito variable, distribuida localmente como WOFF2 (48,912 bytes) para textos, títulos y controles, sin solicitudes a Google Fonts. Fuente original: https://github.com/google/fonts/tree/main/ofl/nunito ; subconjunto latino con caracteres españoles. Se conservan la atribución y licencia SIL OFL 1.1 en `assets/Nunito-OFL.txt` y `docs/Nunito-OFL.txt`. Los iconos nativos mantienen su tipografía de símbolos. La misma fuente se aplica a la portada de Pages.
+
+
+## Integración del Sprint 4
+
+Rama `feat/sprint4-motor`, basada en `a0e3e29`. El diseño, los recursos, el logo, la fuente y la navegación permanecen sin cambios. Solo se adaptan el motor, sus conexiones, los mensajes de revisión personal y las explicaciones técnicas autorizadas. El despliegue actual en `main` no se modifica al publicar esta rama.
+
+Validación: 13 pruebas del modelo y 10 de interfaz, incluyendo 104 perfiles comparados directamente con una carga independiente de funciones del notebook; reglas idénticas; búsqueda y fitness iguales al notebook con la excepción financiera solicitada; revisión exclusivamente personal, revisión combinada, rechazo prioritario, límites 35/65, respaldo de 50, cachés de versiones previas, una ejecución por perfil y un solo gráfico. El notebook se guarda íntegro en `notebooks/Sprint-4.ipynb`.

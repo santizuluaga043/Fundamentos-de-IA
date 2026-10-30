@@ -1,7 +1,16 @@
 import json
 import random
+import importlib
 import streamlit as st
-from riesgo import evaluar_riesgo
+import riesgo
+import evolucion
+
+# Sincronizar también módulos conservados en memoria tras una actualización.
+if getattr(riesgo, "VERSION_MOTOR", None) != "sprint4-mamdani-v1":
+    importlib.reload(riesgo)
+if getattr(evolucion, "VERSION_MOTOR", None) != riesgo.VERSION_MOTOR:
+    importlib.reload(evolucion)
+from riesgo import evaluar_riesgo, VERSION_MOTOR
 from evolucion import estrategia_evolutiva, utilidad_cliente, utilidad_prestamista
 
 st.set_page_config(page_title='Credi Logic AI · Tu crédito, con claridad', page_icon='assets/favicon.png', layout='wide', initial_sidebar_state='auto')
@@ -9,7 +18,6 @@ import interfaz
 
 # Los estilos no guardan estado: recargarlos evita conservar CSS anterior
 # cuando Community Cloud sincroniza nuevos archivos sin reiniciar el proceso.
-import importlib
 importlib.invalidate_caches()
 importlib.reload(interfaz)
 
@@ -25,13 +33,19 @@ for campo in ('alias', 'edad', 'ingreso', 'score', 'monto', 'plazo_anios', 'tasa
     if campo in st.session_state:
         st.session_state[campo] = st.session_state[campo]
 
+# Invalidar ofertas de la versión anterior sin perder los datos del formulario.
+if st.session_state.get('version_motor') != VERSION_MOTOR:
+    for estado in ('contraoferta', 'perfil_oferta', 'evaluacion_actual', 'ultimo_riesgo'):
+        st.session_state.pop(estado, None)
+    st.session_state['version_motor'] = VERSION_MOTOR
+
 st.sidebar.markdown(logo(), unsafe_allow_html=True)
 tema = st.sidebar.selectbox('Apariencia', ['Automático', 'Oscuro', 'Claro'], help='Automático sigue la preferencia de tu sistema.')
 aplicar_tema(tema)
 estilos_marca()
 
 @st.cache_data(show_spinner=False, max_entries=64)
-def buscar_contraoferta(cliente):
+def buscar_contraoferta(cliente, version_motor):
     # Conservar la semilla del Sprint 3 sin alterar el estado aleatorio del proceso.
     estado = random.getstate()
     try:
@@ -127,16 +141,17 @@ if pagina == 'Evaluar solicitud':
     if cliente['reportes_negativos'] >= 2:
         st.warning('Hay dos o más reportes negativos: el modelo mantiene el resultado en rechazo aunque otros factores sean favorables.')
     elif cliente['reportes_negativos'] == 1:
-        st.info('Un reporte negativo aumenta el riesgo de esta solicitud.')
+        st.info('Requiere revisión personal de un funcionario por un reporte negativo.')
     if r['estabilidad'] in ('MEDIA', 'BAJA'):
-        st.info('La antigüedad laboral informada añade cautela a la evaluación según los criterios del proyecto.')
+        st.info('Requiere revisión personal de un funcionario por la estabilidad laboral informada.')
     ancla('alternativa')
     st.subheader('04 · ¿Podemos encontrar otra opción?')
-    if r['decision'] == 'REVISIÓN':
+    if r['ejecutar_evolutiva'] or r['decision'] == 'REVISIÓN':
         st.write('Busca un monto y plazo que reduzcan el riesgo, manteniendo el perfil y la tasa.')
-        if st.button('Generar contraoferta', type='primary', width='stretch'):
+        solicitar = st.button('Generar contraoferta', type='primary', width='stretch', disabled=not r['ejecutar_evolutiva'])
+        if r['ejecutar_evolutiva'] and (solicitar or 'contraoferta' not in st.session_state):
             with st.spinner('Evaluando alternativas…'):
-                st.session_state['contraoferta'] = buscar_contraoferta(cliente)
+                st.session_state['contraoferta'] = buscar_contraoferta(cliente, VERSION_MOTOR)
                 st.session_state['perfil_oferta'] = cliente.copy()
         st.caption('Comparamos distintas combinaciones para buscar una cuota más manejable y conservar, en lo posible, el monto y el plazo que necesitas.')
     else:
@@ -148,7 +163,11 @@ if pagina == 'Evaluar solicitud':
         o = st.session_state['contraoferta']
         resultado['contraoferta'] = o
         monto_oferta, plazo = o['individuo']
-        if o['evaluacion']['decision'] != 'APROBADO':
+        if (o['evaluacion']['viable_financieramente']
+                and o['evaluacion']['revision_manual']
+                and o['evaluacion']['decision'] != 'RECHAZADO'):
+            st.warning('La contraoferta es financieramente viable y queda sujeta a la validación personal de un funcionario.')
+        elif o['evaluacion']['decision'] != 'APROBADO':
             st.warning('La búsqueda no encontró una oferta aprobada. Esta alternativa no constituye una aprobación.')
         else:
             st.success('La alternativa cumple el umbral de aprobación del modelo académico.')
@@ -200,13 +219,13 @@ elif pagina == 'Cómo funciona':
     st.subheader('Sprint 2 · Conocimiento del dominio')
     st.write('Aporta el perfil del solicitante, la estabilidad laboral por edad y el contrato de retorno (DECISIÓN, EXPLICACIÓN). Los notebooks originales se conservan en el repositorio.')
     st.subheader('Sistema de inferencia difuso · Riesgo continuo')
-    st.write('FIS Sugeno de orden cero: score, endeudamiento y cuota/ingreso tienen tres conjuntos superpuestos. Las 27 combinaciones usan AND producto y defuzzificación por media ponderada de consecuentes constantes.')
-    st.code('Score: 500, 650, 800\nDeuda (%): 30, 50, 70\nCuota/ingreso (%): 20, 30, 40\nConsecuente = 10 + 40 × [0.35 × (2-score_nivel) + 0.25 × deuda_nivel + 0.40 × cuota_nivel]')
-    st.write('Los niveles son 0, 1 y 2. Los extremos usan hombros y el conjunto medio es triangular. El riesgo base va de 10 a 90. Estabilidad media añade 5 puntos y baja añade 10; un reporte añade 10. Dos o más reportes fijan un mínimo de 65. El resultado se limita a 100.')
+    st.write('FIS Mamdani del Sprint 4: score, endeudamiento y cuota/ingreso tienen tres conjuntos superpuestos. Las 27 reglas usan AND mínimo, recorte de la salida y agregación por máximo. El índice se obtiene por centroide sobre 1001 puntos entre 0 y 100.')
+    st.code('Score: BAJO trap(0,0,500,650), MEDIO tri(550,700,800), ALTO trap(700,800,1000,1000)\nDeuda (%): BAJO trap(0,0,25,45), MEDIO tri(30,50,70), ALTO trap(55,75,100,100)\nCuota/ingreso (%): BAJO trap(0,0,15,25), MEDIO tri(15,30,45), ALTO trap(35,50,100,100)\nRiesgo: BAJO trap(0,0,20,40), MEDIO tri(25,50,75), ALTO trap(60,80,100,100)')
+    st.write('El índice difuso mide únicamente el perfil financiero. La estabilidad MEDIA o BAJA y un reporte negativo pueden cambiar APROBADO a REVISIÓN y requieren revisión personal de un funcionario, sin sumar puntos al índice. Dos o más reportes fuerzan RECHAZADO. Se conservan las funciones np.interp del notebook y su respaldo de 50 cuando no hay reglas activas, incluidos sus casos extremos.')
     st.write('APROBADO: riesgo ≤35 · REVISIÓN: 35<riesgo<65 · RECHAZADO: riesgo ≥65. Se compara el valor sin redondear.')
     st.subheader('Sprint 3 · Contraofertas (μ+λ)')
-    st.write('Solo se activa en REVISIÓN. Mantiene del 70 al 100 % del monto original y amplía el plazo hasta 240 meses, sin cambiar la tasa ni el perfil. Padres y descendientes compiten juntos; sobreviven los mejores seis.')
-    st.code('Fitness = 0.50 × capacidad + 0.25 × cercanía_monto\n        + 0.25 × cercanía_plazo − penalización\nPenalización = 0 si la oferta es APROBADA; 1 en otro caso.')
+    st.write('Se activa automáticamente cuando 35 < índice difuso < 65, incluso si también se requiere revisión personal. Cada perfil se procesa una sola vez; el botón reutiliza el resultado. Mantiene del 70 al 100 % del monto original y amplía el plazo hasta 240 meses. Padres y descendientes compiten juntos; sobreviven los mejores seis.')
+    st.code('Fitness = 0.50 × capacidad + 0.25 × cercanía_monto\n        + 0.25 × cercanía_plazo − penalización\nPenalización = 0 si el índice difuso de la oferta ≤35; 1 en otro caso.\nLa revisión personal no penaliza el fitness ni desaparece con la contraoferta.')
     st.write('Se conservan las utilidades del notebook: cliente = 40 % monto + 30 % plazo + 30 % conveniencia de intereses; prestamista = 60 % capacidad + 40 % intereses relativos.')
     st.warning('Los pesos, pertenencias y umbrales no están calibrados con datos reales. El uso de edad y antigüedad heredado del notebook requiere revisión de equidad antes de cualquier aplicación real. La búsqueda es heurística y no garantiza un óptimo ni una oferta aprobada.')
 else:

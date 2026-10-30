@@ -1,7 +1,7 @@
 import math
 import random
 import unittest
-from riesgo import evaluar_riesgo, motor_inferencia, decision_por_riesgo, pertenencias
+from riesgo import evaluar_riesgo, motor_inferencia, decision_por_riesgo
 from evolucion import calcular_cuota, estrategia_evolutiva, utilidad_cliente, utilidad_prestamista
 
 BASE = dict(nombre='Prueba',edad=30,ingreso_mensual=4000000,monto_credito=40000000,plazo=3,tasa_anual=18,score=700,endeudamiento=40,antiguedad_empleo_actual=4,reportes_negativos=0)
@@ -10,21 +10,11 @@ class ModeloTest(unittest.TestCase):
     def test_umbrales(self):
         for x, d in [(35,'APROBADO'),(35.00001,'REVISIÓN'),(64.99999,'REVISIÓN'),(65,'RECHAZADO')]:
             self.assertEqual(decision_por_riesgo(x),d)
-    def test_particion(self):
-        for x in range(-100,1100):
-            self.assertAlmostEqual(sum(pertenencias(x,500,650,800)),1)
     def test_perfiles(self):
         self.assertEqual(motor_inferencia(dict(BASE,score=900,endeudamiento=10,monto_credito=1000000))[0],'APROBADO')
         self.assertEqual(motor_inferencia(dict(BASE,reportes_negativos=2))[0],'RECHAZADO')
         self.assertEqual(motor_inferencia(BASE)[0],'REVISIÓN')
         self.assertEqual(len(motor_inferencia(BASE)),2)
-    def test_monotonia_continuidad(self):
-        anterior=101
-        for score in range(1001):
-            r=evaluar_riesgo(dict(BASE,score=score))['riesgo']
-            self.assertLessEqual(r,anterior+1e-9); anterior=r
-        for centro in [500,650,800]:
-            self.assertLess(abs(evaluar_riesgo(dict(BASE,score=centro-.0001))['riesgo']-evaluar_riesgo(dict(BASE,score=centro+.0001))['riesgo']),.001)
     def test_validacion(self):
         for campo, valor in [('ingreso_mensual',0),('plazo',0),('plazo',.12),('score',float('nan')),('reportes_negativos',.5)]:
             with self.assertRaises(ValueError): evaluar_riesgo(dict(BASE,**{campo:valor}))

@@ -1,7 +1,12 @@
-"""FIS Sugeno de orden cero: 27 reglas, AND producto y media ponderada."""
+"""Adaptador del Sprint 4 al contrato de datos de la interfaz existente."""
 import math
-from itertools import product
+from motor_sprint4 import (
+    calcular_riesgo_difuso, calcular_cuota, evaluar_estabilidad_actual,
+    fuzzificar_score, fuzzificar_endeudamiento, fuzzificar_capacidad,
+    reglas as REGLAS, motor_inferencia as motor_notebook,
+)
 
+VERSION_MOTOR = 'sprint4-mamdani-v1'
 
 def validar_cliente(c):
     campos = ('edad', 'ingreso_mensual', 'monto_credito', 'plazo', 'tasa_anual',
@@ -23,12 +28,6 @@ def validar_cliente(c):
         raise ValueError('Los reportes deben ser enteros.')
 
 
-def pertenencias(x, a, b, c):
-    """Partición continua con hombros y triángulo; suma siempre uno."""
-    bajo = max(0., min(1., (b-x)/(b-a)))
-    alto = max(0., min(1., (x-b)/(c-b)))
-    return (bajo, max(0., 1-bajo-alto), alto)
-
 
 def decision_por_riesgo(r):
     return 'APROBADO' if r <= 35 else 'RECHAZADO' if r >= 65 else 'REVISIÓN'
@@ -36,36 +35,37 @@ def decision_por_riesgo(r):
 
 def evaluar_riesgo(cliente):
     validar_cliente(cliente)
-    # Importación local evita dependencia circular al conservar Sprint 3.
-    from evolucion import calcular_cuota, evaluar_estabilidad_actual
-    c = cliente
-    cuota = calcular_cuota(c['monto_credito'], c['plazo'], c['tasa_anual'])
-    relacion = cuota / c['ingreso_mensual'] * 100
+    indice = calcular_riesgo_difuso(cliente)
+    decision, explicacion = motor_notebook(cliente)
+    cuota = calcular_cuota(cliente['monto_credito'], cliente['plazo'], cliente['tasa_anual'])
+    relacion = cuota / cliente['ingreso_mensual'] * 100
+    score = fuzzificar_score(cliente['score'])
+    deuda = fuzzificar_endeudamiento(cliente['endeudamiento'])
+    capacidad = fuzzificar_capacidad(relacion)
     membresias = {
-        'Score (malo → bueno)': pertenencias(c['score'], 500, 650, 800),
-        'Endeudamiento (bajo → alto)': pertenencias(c['endeudamiento'], 30, 50, 70),
-        'Cuota / ingreso (baja → alta)': pertenencias(relacion, 20, 30, 40),
+        'Score (malo → bueno)': tuple(float(v) for v in score.values()),
+        'Endeudamiento (bajo → alto)': tuple(float(v) for v in deuda.values()),
+        'Cuota / ingreso (baja → alta)': tuple(float(v) for v in capacidad.values()),
     }
-    reglas = []
-    for s, d, p in product(range(3), repeat=3):
-        activacion = membresias['Score (malo → bueno)'][s] * membresias['Endeudamiento (bajo → alto)'][d] * membresias['Cuota / ingreso (baja → alta)'][p]
-        # Consecuentes constantes: perfil favorable 10, intermedio 50, adverso 90.
-        consecuente = 10 + 40 * (.35*(2-s) + .25*d + .40*p)
-        reglas.append({'score': s, 'deuda': d, 'cuota': p, 'activacion': activacion, 'consecuente': consecuente})
-    base = sum(r['activacion']*r['consecuente'] for r in reglas) / sum(r['activacion'] for r in reglas)
-    estabilidad = evaluar_estabilidad_actual(c['antiguedad_empleo_actual'], c['edad'])
-    ajuste = {'ESTABLE': 0, 'N/A': 0, 'MEDIA': 5, 'BAJA': 10}[estabilidad]
-    riesgo = min(100., base + ajuste + (10 if c['reportes_negativos'] == 1 else 0))
-    # Se conserva la regla de rechazo por >=2 reportes del sistema experto.
-    if c['reportes_negativos'] >= 2:
-        riesgo = max(65., riesgo)
-    explicacion = (f'Riesgo global {riesgo:.2f}/100; base difusa {base:.2f}, '
-                   f'estabilidad {estabilidad} (+{ajuste}), reportes {c["reportes_negativos"]}. '
-                   f'Cuota/ingreso: {relacion:.1f} %. '
-                   'Umbrales: aprobación ≤35; rechazo ≥65; revisión entre ambos.')
-    return {'riesgo': riesgo, 'base': base, 'decision': decision_por_riesgo(riesgo),
-            'explicacion': explicacion, 'cuota': cuota, 'relacion': relacion,
-            'membresias': membresias, 'reglas': reglas, 'estabilidad': estabilidad}
+    niveles = {'BAJO': 0, 'MEDIO': 1, 'ALTO': 2}
+    reglas = [dict(score=niveles[s], deuda=niveles[d], cuota=niveles[c],
+                   activacion=float(min(score[s], deuda[d], capacidad[c])), salida=salida)
+              for s, d, c, salida in REGLAS]
+    estabilidad = evaluar_estabilidad_actual(cliente['antiguedad_empleo_actual'], cliente['edad'])
+    motivos = []
+    if estabilidad in ('MEDIA', 'BAJA'):
+        motivos.append('estabilidad laboral')
+    if cliente['reportes_negativos'] == 1:
+        motivos.append('un reporte negativo')
+    revision_manual = bool(motivos)
+    if revision_manual:
+        explicacion += ' Requiere revisión personal de un funcionario por ' + ' y '.join(motivos) + '.'
+    return dict(riesgo=indice, base=indice, decision=decision, explicacion=explicacion,
+                cuota=cuota, relacion=relacion, membresias=membresias, reglas=reglas,
+                estabilidad=estabilidad, revision_manual=revision_manual,
+                motivos_revision=motivos, decision_financiera=decision_por_riesgo(indice),
+                viable_financieramente=indice <= 35,
+                ejecutar_evolutiva=35 < indice < 65)
 
 
 def motor_inferencia(cliente):

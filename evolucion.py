@@ -1,6 +1,7 @@
-"""Funciones conservadas del Sprint 3; motor sustituido por FIS."""
+"""Estrategia del Sprint 4: la penalización evalúa solo viabilidad financiera."""
 import random
-from riesgo import motor_inferencia
+from motor_sprint4 import calcular_riesgo_difuso
+from riesgo import VERSION_MOTOR
 
 def evaluar_estabilidad_actual(antiguedad_actual, edad):
 
@@ -105,12 +106,12 @@ def calcular_fitness(individuo, cliente):
     else:
         cercania_plazo = max(0, min(1, 1 - (plazo - plazo_original) / (20 - plazo_original)))
 
-    # Penalizar ofertas que el motor no aprobaría
+    # La revisión personal no invalida financieramente una oferta.
     oferta = cliente.copy()
     oferta["monto_credito"] = monto
     oferta["plazo"] = plazo
-    decision, _ = motor_inferencia(oferta)
-    penalizacion = 0 if decision == "APROBADO" else 1
+    indice = calcular_riesgo_difuso(oferta)
+    penalizacion = 0 if indice <= 35 else 1
     return (0.50 * capacidad + 0.25 * cercania_monto
             + 0.25 * cercania_plazo - penalizacion)
 

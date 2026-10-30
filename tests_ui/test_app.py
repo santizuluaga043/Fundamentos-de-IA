@@ -10,7 +10,7 @@ class AppTestCase(unittest.TestCase):
     def test_evaluar_y_navegar(self):
         at = self.abrir()
         self.assertTrue(any(m.value == 'REVISIÓN' for m in at.metric))
-        self.assertFalse(any(m.label == 'Monto alternativo' for m in at.metric))
+        self.assertTrue(any(m.label == 'Monto alternativo' for m in at.metric))
         at.button[0].click().run()
         self.assertEqual(len(at.exception), 0)
         self.assertTrue(any(m.label == 'Monto alternativo' for m in at.metric))
@@ -30,8 +30,8 @@ class AppTestCase(unittest.TestCase):
         at.number_input(key='deuda').set_value(42.75).run()
         self.assertEqual(at.number_input(key='deuda').value, 42.75)
         self.assertNotEqual(at.metric[1].value, riesgo)
-        self.assertNotIn('contraoferta', at.session_state)
-        self.assertFalse(any(m.label == 'Monto alternativo' for m in at.metric))
+        self.assertEqual(at.session_state['perfil_oferta']['endeudamiento'], 42.75)
+        self.assertTrue(any(m.label == 'Monto alternativo' for m in at.metric))
         at.number_input(key='score').set_value(701).run()
         self.assertEqual(at.number_input(key='score').value, 701)
         self.assertEqual(len(at.slider), 0)
@@ -42,7 +42,7 @@ class AppTestCase(unittest.TestCase):
         for tema in ['Oscuro', 'Claro', 'Automático']:
             at.sidebar.selectbox[0].set_value(tema).run()
             self.assertEqual(len(at.exception), 0)
-        at.number_input(key='score').set_value(1000).run()
+        at.number_input(key='score').set_value(900).run()
         at.number_input(key='deuda').set_value(0.).run()
         monto = next(n for n in at.number_input if n.label == 'Monto solicitado (COP)')
         monto.set_value(1000000.).run()
@@ -101,3 +101,54 @@ class AppTestCase(unittest.TestCase):
         at.number_input(key='plazo_anios').set_value(2.1).run()
         self.assertGreater(len(at.error), 0)
         self.assertEqual(len(at.metric), 0)
+
+    def test_revision_personal_con_y_sin_busqueda(self):
+        at = self.abrir()
+        at.number_input(key='score').set_value(900).run()
+        at.number_input(key='deuda').set_value(20.).run()
+        at.number_input(key='reportes').set_value(1).run()
+        at.number_input(key='antiguedad').set_value(1.).run()
+        self.assertEqual(at.metric[0].value, 'REVISIÓN')
+        self.assertTrue(at.session_state['evaluacion_actual']['ejecutar_evolutiva'])
+        self.assertTrue(at.session_state['contraoferta']['evaluacion']['viable_financieramente'])
+        self.assertTrue(any('sujeta a la validación personal de un funcionario' in w.value for w in at.warning))
+        self.assertTrue(any('Requiere revisión personal de un funcionario' in i.value for i in at.info))
+        at.number_input(key='monto').set_value(1000000.).run()
+        self.assertEqual(at.metric[0].value, 'REVISIÓN')
+        self.assertFalse(at.session_state['evaluacion_actual']['ejecutar_evolutiva'])
+        self.assertNotIn('contraoferta', at.session_state)
+        self.assertTrue(at.button[0].disabled)
+        self.assertEqual(len(at.exception),0)
+
+    def test_una_ejecucion_por_perfil_y_una_grafica(self):
+        from unittest.mock import patch
+        import streamlit as st
+        import evolucion
+        st.cache_data.clear()
+        with patch('evolucion.estrategia_evolutiva', wraps=evolucion.estrategia_evolutiva) as ejecutar:
+            at=self.abrir()
+            self.assertEqual(ejecutar.call_count,1)
+            at.run()
+            at.button[0].click().run()
+            self.assertEqual(ejecutar.call_count,1)
+            at.sidebar.radio[0].set_value('Cómo funciona').run()
+            self.assertEqual(len(at.get('arrow_vega_lite_chart')),1)
+            at.sidebar.radio[0].set_value('Evaluar solicitud').run()
+            self.assertEqual(ejecutar.call_count,1)
+        st.cache_data.clear()
+
+    def test_actualizacion_invalida_backend_y_oferta_anteriores(self):
+        import riesgo
+        import evolucion
+        from unittest.mock import patch
+        at=self.abrir()
+        at.session_state['version_motor']='sugeno-anterior'
+        at.session_state['contraoferta']={'obsoleta':True}
+        # Módulos sin marca: reproducir los ya importados antes del despliegue.
+        del riesgo.VERSION_MOTOR
+        del evolucion.VERSION_MOTOR
+        at.run()
+        self.assertEqual(len(at.exception),0)
+        self.assertEqual(at.session_state['version_motor'],'sprint4-mamdani-v1')
+        self.assertNotIn('obsoleta',at.session_state['contraoferta'])
+        self.assertEqual(evolucion.VERSION_MOTOR,riesgo.VERSION_MOTOR)
