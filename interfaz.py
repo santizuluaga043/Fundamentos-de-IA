@@ -29,7 +29,7 @@ h1{letter-spacing:-.045em;line-height:1.15}h2,h3{letter-spacing:-.02em}
 .stApp [data-testid="stBaseButton-primary"] p{color:var(--action-ink)}
 .stApp a{color:var(--accent)}
 .stApp :is(button,input,a,[role="switch"]):focus-visible{outline:3px solid var(--focus)!important;outline-offset:3px}
-.stApp [data-testid="stAlert"]{border:1px solid var(--line);background:var(--panel)}
+.stApp [data-testid="stAlert"]{border:0;background:transparent;box-shadow:none}
 .stApp [data-testid="stTable"]{color:var(--ink);background:var(--panel)}
 @media(max-width:640px){.block-container{padding:1.3rem 1rem}h1{font-size:2rem}[data-testid="stMetric"]{padding:14px}}
 @media(prefers-reduced-motion:reduce){.stApp *{transition:none!important;animation:none!important;scroll-behavior:auto!important}}

@@ -7,12 +7,11 @@ from evolucion import estrategia_evolutiva, utilidad_cliente, utilidad_prestamis
 st.set_page_config(page_title='Credi Logic AI · Tu crédito, con claridad', page_icon='assets/favicon.png', layout='wide')
 import interfaz
 
-# Community Cloud puede conservar el módulo previo al actualizar el checkout.
-# Recargarlo solo si falta la nueva API de estilos, sin borrar datos de sesión.
-if not hasattr(interfaz, 'estilos_marca'):
-    import importlib
-    importlib.invalidate_caches()
-    importlib.reload(interfaz)
+# Los estilos no guardan estado: recargarlos evita conservar CSS anterior
+# cuando Community Cloud sincroniza nuevos archivos sin reiniciar el proceso.
+import importlib
+importlib.invalidate_caches()
+importlib.reload(interfaz)
 
 from interfaz import aplicar_tema, estilos_marca
 from marca import logo, bienvenida, indice, ancla, panorama
@@ -61,7 +60,7 @@ if pagina == 'Evaluar solicitud':
         st.subheader('01 · Cuéntanos qué necesitas')
         a,b,c = st.columns(3, gap='large')
         with a:
-            nombre = st.text_input('Alias del solicitante', 'Caso de ejemplo', max_chars=80, key='alias')
+            nombre = st.text_input('Nombre', 'Caso de ejemplo', max_chars=80, key='alias')
             edad = st.number_input('Edad', 18, 100, 30, key='edad')
             ingreso = st.number_input('Ingreso mensual (COP)', 1., 1e12, 4000000., step=100000., key='ingreso')
             score = st.number_input('Score crediticio', 0, 1000, 700, step=1, help='Escribe el valor exacto entre 0 y 1000.', key='score')
