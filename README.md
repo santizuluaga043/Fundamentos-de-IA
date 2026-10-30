@@ -42,7 +42,7 @@ Prototipo educativo sin calibración con datos, auditoría de equidad ni validac
 
 ## Interfaz adaptativa y rendimiento
 
-La apariencia se selecciona en la barra lateral: Automático sigue `prefers-color-scheme` del sistema, Oscuro y Claro fijan la paleta. Los colores de superficies, textos y controles se adaptan juntos. Se usan fuentes del sistema, foco visible, controles de al menos 44 px, cifras tabulares y transiciones cortas desactivadas con `prefers-reduced-motion`. Las decisiones incluyen texto e iconos y no dependen solo del color.
+La apariencia se selecciona en la barra lateral: Automático sigue `prefers-color-scheme` del sistema, Oscuro y Claro fijan la paleta. Los colores de superficies, textos y controles se adaptan juntos. Se usa Nunito local con respaldo de fuentes del sistema, foco visible, controles de al menos 44 px, cifras tabulares y transiciones cortas desactivadas con `prefers-reduced-motion`. Las decisiones incluyen texto e iconos y no dependen solo del color.
 
 Los campos se confirman con Enter o al perder el foco. Score admite enteros y endeudamiento dos decimales; ya no hay sliders. El FIS se recalcula al confirmar cada ajuste. La generación evolutiva se solicita con **Generar contraoferta** y se almacena en caché para hasta 64 perfiles. Si cambia cualquier dato, desaparece la oferta anterior. La trazabilidad y la gráfica se construyen solo cuando se activan sus controles; no hay fuentes, imágenes ni scripts remotos añadidos por la interfaz.
 
@@ -58,3 +58,8 @@ El índice lateral enlaza a cinco secciones: Tu solicitud, Tu resultado, Entiend
 Validación de esta versión: ocho pruebas del modelo y cinco de interfaz; comprobación en Chromium de los enlaces del índice, generación de alternativa, logo final, móvil sin desbordamiento horizontal y preferencia de movimiento reducido. Tiempo local de navegador hasta mostrar la interfaz e índice: 1.876 s; no es una medición de Community Cloud ni una garantía de carga pública. La portada de GitHub Pages también utiliza la nueva identidad.
 
 El plazo de entrada se expresa en años (por ejemplo 3.5 años = 42 meses). El motor recibe años y convierte internamente a meses para la amortización; se rechazan plazos que no equivalgan a meses completos. Las contraofertas y la comparación mantienen la duración en meses para mostrar su valor exacto.
+
+
+La navegación general se encuentra debajo del recorrido, en la parte inferior de la barra lateral. La barra abierta mide 292 px y utiliza los controles nativos de Streamlit para ocultarse y expandirse; el control de cierre permanece visible y el de reapertura indica «Menú». En móvil comienza plegada y mantiene un ancho limitado al espacio disponible.
+
+Tipografía: Nunito variable, distribuida localmente como WOFF2 (48,912 bytes) para textos, títulos y controles, sin solicitudes a Google Fonts. Fuente original: https://github.com/google/fonts/tree/main/ofl/nunito ; subconjunto latino con caracteres españoles. Se conservan la atribución y licencia SIL OFL 1.1 en `assets/Nunito-OFL.txt` y `docs/Nunito-OFL.txt`. Los iconos nativos mantienen su tipografía de símbolos. La misma fuente se aplica a la portada de Pages.

@@ -4,7 +4,7 @@ import streamlit as st
 from riesgo import evaluar_riesgo
 from evolucion import estrategia_evolutiva, utilidad_cliente, utilidad_prestamista
 
-st.set_page_config(page_title='Credi Logic AI · Tu crédito, con claridad', page_icon='assets/favicon.png', layout='wide')
+st.set_page_config(page_title='Credi Logic AI · Tu crédito, con claridad', page_icon='assets/favicon.png', layout='wide', initial_sidebar_state='auto')
 import interfaz
 
 # Los estilos no guardan estado: recargarlos evita conservar CSS anterior
@@ -46,9 +46,11 @@ def buscar_contraoferta(cliente):
                 utilidad_prestamista=utilidad_prestamista(*individuo, cliente))
 
 st.sidebar.caption('FUNDAMENTOS DE INTELIGENCIA ARTIFICIAL')
-pagina = st.sidebar.radio('Navegación', ['Evaluar solicitud', 'Cómo funciona', 'Proyecto y herramientas'])
 guia = st.sidebar.container()
-st.sidebar.info('Prototipo académico. No constituye una decisión financiera real. No ingreses datos personales reales.')
+with st.sidebar.container(key='sidebar_footer'):
+    st.divider()
+    pagina = st.radio('Navegación', ['Evaluar solicitud', 'Cómo funciona', 'Proyecto y herramientas'])
+    st.caption('Prototipo académico. No constituye una decisión financiera real. No ingreses datos personales reales.')
 
 if pagina == 'Evaluar solicitud':
     bienvenida()

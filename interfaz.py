@@ -1,5 +1,7 @@
 """Tema sin fuentes, imágenes ni scripts externos; adaptación al sistema operativo."""
 import streamlit as st
+from pathlib import Path
+from base64 import b64encode
 
 OSCURO = '--surface:#0b1220;--panel:#102238;--field:#15263b;--ink:#ecf3ff;--muted:#b6c6db;--line:#35465e;--accent:#38D4C1;--focus:#8bbaff;--action:#145e55;--action-ink:#ffffff;color-scheme:dark;'
 CLARO = '--surface:#f5f7fb;--panel:#ffffff;--field:#edf2f8;--ink:#142338;--muted:#475b72;--line:#becbdc;--accent:#006858;--focus:#245ab2;--action:#006858;--action-ink:#ffffff;color-scheme:light;'
@@ -8,10 +10,21 @@ CLARO = '--surface:#f5f7fb;--panel:#ffffff;--field:#edf2f8;--ink:#142338;--muted
 def aplicar_tema(tema):
     paleta = OSCURO if tema != 'Claro' else CLARO
     adaptativo = f'@media(prefers-color-scheme:light){{:root{{{CLARO}}}}}' if tema == 'Automático' else ''
+    fuente = b64encode((Path(__file__).parent / 'assets/Nunito-Latin.woff2').read_bytes()).decode('ascii')
     st.markdown('''<style>
+@font-face{font-family:CrediNunito;src:url(data:font/woff2;base64,FUENTE_NUNITO) format('woff2');font-style:normal;font-weight:200 1000;font-display:swap}
 :root{PALETA}
 ADAPTATIVO
-.stApp{--background-color:var(--surface);--secondary-background-color:var(--panel);--text-color:var(--ink);--primary-color:var(--accent);background:var(--surface);color:var(--ink)}
+.stApp{--background-color:var(--surface);--secondary-background-color:var(--panel);--text-color:var(--ink);--primary-color:var(--accent);background:var(--surface);color:var(--ink);--font:CrediNunito,system-ui,sans-serif;--heading-font:CrediNunito,system-ui,sans-serif;font-family:var(--font)}
+.stApp :is(h1,h2,h3,h4,h5,h6,p,label,input,button,textarea,select,[data-baseweb="select"],[data-testid="stMetricValue"],.cl-brand,.cl-index){font-family:CrediNunito,system-ui,sans-serif}
+[data-testid="stSidebar"][aria-expanded="true"]{width:292px!important;max-width:calc(100vw - 40px)}
+[data-testid="stSidebarCollapseButton"]{opacity:1!important;visibility:visible!important}
+[data-testid="stSidebarCollapseButton"] span,[data-testid="stSidebarCollapsedControl"] span,[data-testid="stExpandSidebarButton"] span{color:var(--ink)!important}
+[data-testid="stSidebarCollapsedControl"],[data-testid="stExpandSidebarButton"]{background:var(--panel);border-radius:10px}
+[data-testid="stExpandSidebarButton"]{gap:6px;min-width:82px}
+[data-testid="stExpandSidebarButton"]::after{content:"Menú";font-family:CrediNunito,system-ui,sans-serif;color:var(--ink);font-size:13px}
+[data-testid="stSidebarUserContent"]>div>[data-testid="stVerticalBlock"]{min-height:calc(100dvh - 120px)}
+.st-key-sidebar_footer{margin-top:auto;padding-top:8px}
 .block-container{max-width:1180px;padding-top:2.2rem;padding-bottom:3rem}
 h1{letter-spacing:-.045em;line-height:1.15}h2,h3{letter-spacing:-.02em}
 .stApp h1,.stApp h2,.stApp h3,.stApp p,.stApp label,.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricLabel"]{color:var(--ink)}
@@ -33,7 +46,7 @@ h1{letter-spacing:-.045em;line-height:1.15}h2,h3{letter-spacing:-.02em}
 .stApp [data-testid="stTable"]{color:var(--ink);background:var(--panel)}
 @media(max-width:640px){.block-container{padding:1.3rem 1rem}h1{font-size:2rem}[data-testid="stMetric"]{padding:14px}}
 @media(prefers-reduced-motion:reduce){.stApp *{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
-</style>'''.replace('PALETA', paleta).replace('ADAPTATIVO', adaptativo), unsafe_allow_html=True)
+</style>'''.replace('FUENTE_NUNITO', fuente).replace('PALETA', paleta).replace('ADAPTATIVO', adaptativo), unsafe_allow_html=True)
 
 
 def estilos_marca():
