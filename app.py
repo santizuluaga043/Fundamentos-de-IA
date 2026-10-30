@@ -5,7 +5,7 @@ from riesgo import evaluar_riesgo
 from evolucion import estrategia_evolutiva, utilidad_cliente, utilidad_prestamista
 
 st.set_page_config(page_title='Crédito · IA', page_icon='◈', layout='wide')
-st.markdown('''<style>.block-container{max-width:1120px;padding-top:2.5rem}h1{letter-spacing:-.045em}div[data-testid="stMetric"]{background:#f1f5f9;padding:18px;border-radius:12px;color:#0f172a}.stButton>button{border-radius:8px}</style>''', unsafe_allow_html=True)
+st.markdown('''<style>.block-container{max-width:1120px;padding-top:2.5rem}h1{letter-spacing:-.045em}div[data-testid="stMetric"]{background:var(--secondary-background-color);padding:18px;border-radius:12px;border:1px solid rgba(128,128,128,.25)}.stButton>button{border-radius:8px}</style>''', unsafe_allow_html=True)
 st.sidebar.title('◈ Crédito · IA')
 st.sidebar.caption('FUNDAMENTOS DE INTELIGENCIA ARTIFICIAL')
 pagina = st.sidebar.radio('Navegación', ['Evaluar solicitud', 'Cómo funciona', 'Proyecto y herramientas'])
