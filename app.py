@@ -5,6 +5,15 @@ from riesgo import evaluar_riesgo
 from evolucion import estrategia_evolutiva, utilidad_cliente, utilidad_prestamista
 
 st.set_page_config(page_title='Credi Logic AI · Tu crédito, con claridad', page_icon='assets/favicon.png', layout='wide')
+import interfaz
+
+# Community Cloud puede conservar el módulo previo al actualizar el checkout.
+# Recargarlo solo si falta la nueva API de estilos, sin borrar datos de sesión.
+if not hasattr(interfaz, 'estilos_marca'):
+    import importlib
+    importlib.invalidate_caches()
+    importlib.reload(interfaz)
+
 from interfaz import aplicar_tema, estilos_marca
 from marca import logo, bienvenida, indice, ancla, panorama
 

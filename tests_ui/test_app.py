@@ -75,3 +75,15 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(at.number_input(key='score').value, 712)
         self.assertIn('contraoferta', at.session_state)
         self.assertEqual(len(at.exception), 0)
+
+    def test_actualizacion_con_modulo_anterior_en_memoria(self):
+        import importlib
+        import interfaz
+        # Reproducir una sesión anterior al despliegue de estilos_marca.
+        del interfaz.estilos_marca
+        try:
+            at = self.abrir()
+            self.assertTrue(any('Tu crédito, con claridad.' == t.value for t in at.title))
+            self.assertTrue(callable(interfaz.estilos_marca))
+        finally:
+            importlib.reload(interfaz)
