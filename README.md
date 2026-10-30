@@ -1,4 +1,4 @@
-# Crédito · IA
+# Credi Logic AI
 
 Aplicación académica Streamlit que integra los notebooks originales de los sprints 2 y 3 y un nuevo FIS Sugeno. El Sprint 1 no forma parte de la aplicación.
 
@@ -46,4 +46,13 @@ La apariencia se selecciona en la barra lateral: Automático sigue `prefers-colo
 
 Los campos se confirman con Enter o al perder el foco. Score admite enteros y endeudamiento dos decimales; ya no hay sliders. El FIS se recalcula al confirmar cada ajuste. La generación evolutiva se solicita con **Generar contraoferta** y se almacena en caché para hasta 64 perfiles. Si cambia cualquier dato, desaparece la oferta anterior. La trazabilidad y la gráfica se construyen solo cuando se activan sus controles; no hay fuentes, imágenes ni scripts remotos añadidos por la interfaz.
 
-Medición local con Streamlit AppTest (Python 3.12): primera ejecución incluyendo imports 0.393 s; mediana de cinco cambios de score 0.016 s (máximo 0.016 s); búsqueda evolutiva más render 0.293 s. Salud HTTP: `ok`. Estos tiempos miden ejecución local, no carga visual en un navegador ni latencia de Community Cloud. El objetivo de carga inferior a 2.5 s debe verificarse en el despliegue público; los arranques tras reposo y la red pueden superarlo. No se pudo ejecutar una inspección visual automatizada porque la descarga del navegador fue bloqueada por la política de red.
+Medición local con Streamlit AppTest (Python 3.12): primera ejecución incluyendo imports 0.393 s; mediana de cinco cambios de score 0.016 s (máximo 0.016 s); búsqueda evolutiva más render 0.293 s. Salud HTTP: `ok`. Estos tiempos miden ejecución local, no carga visual en un navegador ni latencia de Community Cloud. El objetivo de carga inferior a 2.5 s debe verificarse en el despliegue público; los arranques tras reposo y la red pueden superarlo. La inspección visual posterior se realizó con Chromium disponible en el sistema; se verificaron escritorio, móvil y movimiento reducido.
+
+
+## Identidad y recorrido guiado
+
+Credi Logic AI utiliza un símbolo C con nodos, azul marino `#123A60`, turquesa `#38D4C1` y blanco. Los recursos vectoriales están en `assets/` y la presentación se implementa en `marca.py`. La bienvenida dibuja una tendencia financiera y revela el logo en 2.1 segundos, una sola vez por sesión, sin bloquear el formulario ni ejecutar esperas. Con movimiento reducido el logo aparece directamente.
+
+El índice lateral enlaza a cinco secciones: Tu solicitud, Tu resultado, Entiende la decisión, Busca una alternativa y Compara las opciones. Todos los destinos existen incluso sin contraoferta y explican cuándo está disponible cada paso. El perfil y la alternativa se conservan al navegar a Cómo funciona y regresar. Los detalles de reglas, fitness, utilidades numéricas y convergencia están en Cómo funciona. La comparación principal muestra montos, plazos, cuotas e intereses totales; una extensión del plazo incluye una advertencia visible sobre el costo.
+
+Validación de esta versión: ocho pruebas del modelo y cinco de interfaz; comprobación en Chromium de los enlaces del índice, generación de alternativa, logo final, móvil sin desbordamiento horizontal y preferencia de movimiento reducido. Tiempo local de navegador hasta mostrar la interfaz e índice: 1.876 s; no es una medición de Community Cloud ni una garantía de carga pública. La portada de GitHub Pages también utiliza la nueva identidad.
