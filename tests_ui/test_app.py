@@ -87,3 +87,17 @@ class AppTestCase(unittest.TestCase):
             self.assertTrue(callable(interfaz.estilos_marca))
         finally:
             importlib.reload(interfaz)
+
+    def test_plazo_en_anios_y_conversion(self):
+        from evolucion import calcular_cuota
+        at = self.abrir()
+        at.number_input(key='plazo_anios').set_value(3.5).run()
+        self.assertEqual(len(at.exception), 0)
+        self.assertTrue(any('42 meses' in c.value for c in at.caption))
+        self.assertAlmostEqual(at.session_state['evaluacion_actual']['cuota'], calcular_cuota(40000000, 3.5, 18))
+        at.sidebar.radio[0].set_value('Cómo funciona').run()
+        at.sidebar.radio[0].set_value('Evaluar solicitud').run()
+        self.assertEqual(at.number_input(key='plazo_anios').value, 3.5)
+        at.number_input(key='plazo_anios').set_value(2.1).run()
+        self.assertGreater(len(at.error), 0)
+        self.assertEqual(len(at.metric), 0)

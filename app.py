@@ -17,8 +17,12 @@ if not hasattr(interfaz, 'estilos_marca'):
 from interfaz import aplicar_tema, estilos_marca
 from marca import logo, bienvenida, indice, ancla, panorama
 
+# Migrar el plazo de las sesiones que usaban el campo en meses.
+if 'plazo_anios' not in st.session_state and 'meses' in st.session_state:
+    st.session_state['plazo_anios'] = st.session_state['meses'] / 12
+
 # Conservar el perfil al abrir las páginas de explicación.
-for campo in ('alias', 'edad', 'ingreso', 'score', 'monto', 'meses', 'tasa', 'deuda', 'antiguedad', 'reportes'):
+for campo in ('alias', 'edad', 'ingreso', 'score', 'monto', 'plazo_anios', 'tasa', 'deuda', 'antiguedad', 'reportes'):
     if campo in st.session_state:
         st.session_state[campo] = st.session_state[campo]
 
@@ -63,14 +67,16 @@ if pagina == 'Evaluar solicitud':
             score = st.number_input('Score crediticio', 0, 1000, 700, step=1, help='Escribe el valor exacto entre 0 y 1000.', key='score')
         with b:
             monto = st.number_input('Monto solicitado (COP)', 1., 1e12, 40000000., step=1000000., key='monto')
-            meses = st.number_input('Plazo (meses)', 1, 240, 36, key='meses')
+            plazo_anios = st.number_input('Plazo (años)', 0., 20., 3., step=.5, format='%.2f', key='plazo_anios', help='Mayor que 0 y hasta 20 años. Admite fracciones equivalentes a meses completos, por ejemplo 3.5 años = 42 meses.')
+            meses = round(plazo_anios * 12)
+            st.caption(f'{plazo_anios:g} años × 12 = {plazo_anios * 12:g} meses. El cálculo usa meses completos.')
             tasa = st.number_input('Tasa efectiva anual (%)', 0., 200., 18., step=.5, key='tasa')
         with c:
             deuda = st.number_input('Endeudamiento actual (%)', 0., 100., 40., step=.01, format='%.2f', help='Admite dos decimales, por ejemplo 42.75 %.', key='deuda')
             antiguedad = st.number_input('Antigüedad en empleo actual (años)', 0., 80., 4., step=.5, key='antiguedad')
             reportes = st.number_input('Reportes negativos', 0, 100, 0, key='reportes')
         st.caption('Endeudamiento: obligaciones actuales / ingreso. La cuota nueva se analiza por separado.')
-    cliente = dict(nombre=nombre, edad=edad, ingreso_mensual=ingreso, monto_credito=monto, plazo=meses/12, tasa_anual=tasa, score=score, endeudamiento=deuda, antiguedad_empleo_actual=antiguedad, reportes_negativos=reportes)
+    cliente = dict(nombre=nombre, edad=edad, ingreso_mensual=ingreso, monto_credito=monto, plazo=plazo_anios, tasa_anual=tasa, score=score, endeudamiento=deuda, antiguedad_empleo_actual=antiguedad, reportes_negativos=reportes)
     try:
         r = evaluar_riesgo(cliente)
     except ValueError as e:
