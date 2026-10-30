@@ -19,9 +19,14 @@ def indice(decision, tiene_oferta, contenedor=None):
     pasos = [('perfil','01','Tu solicitud','Ingresa tus datos'),
              ('resultado','02','Tu resultado',decision.capitalize()),
              ('explicacion','03','Entiende la decisión','Qué se tuvo en cuenta'),
-             ('alternativa','04','Busca una alternativa','Disponible en revisión' if decision != 'REVISIÓN' else 'Explora otra opción'),
-             ('comparacion','05','Compara las opciones','Alternativa lista' if tiene_oferta else 'Después de la búsqueda')]
-    enlaces = ''.join(f'<a href="#{destino}" target="_self"><span class="cl-step">{n}</span><span><strong>{titulo}</strong><small>{sub}</small></span></a>' for destino,n,titulo,sub in pasos)
+             ('comparacion','04','Compara las opciones','Alternativa lista' if tiene_oferta else 'Después de la búsqueda')]
+    dibujos = {
+        'perfil': '<rect x="6" y="3" width="20" height="26" rx="4"/><circle cx="16" cy="12" r="4"/><path d="M10 24q6-8 12 0"/>',
+        'resultado': '<path d="M16 3L28 8v8c0 7-12 13-12 13S4 23 4 16V8Z"/><path d="m10 16 4 4 8-9"/>',
+        'explicacion': '<circle cx="14" cy="14" r="10"/><path d="m22 22 7 7M14 8v7m0 4v1"/>',
+        'comparacion': '<path d="M4 27h24M8 24V14h5v10m6 0V5h5v19"/>',
+    }
+    enlaces = ''.join(f'<a href="#{destino}" target="_self" aria-label="{titulo}" title="{titulo}"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">{dibujos[destino]}</svg><span class="cl-tip">{titulo}</span></a>' for destino,n,titulo,sub in pasos)
     (contenedor or st.sidebar).markdown('<div class="cl-eyebrow">TU RECORRIDO</div><nav class="cl-index" aria-label="Paso a paso de tu evaluación">'+enlaces+'</nav>', unsafe_allow_html=True)
 
 

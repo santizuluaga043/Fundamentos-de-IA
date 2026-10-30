@@ -13,7 +13,7 @@ if getattr(evolucion, "VERSION_MOTOR", None) != riesgo.VERSION_MOTOR:
 from riesgo import evaluar_riesgo, VERSION_MOTOR
 from evolucion import estrategia_evolutiva, utilidad_cliente, utilidad_prestamista
 
-st.set_page_config(page_title='Credi Logic AI · Tu crédito, con claridad', page_icon='assets/favicon.png', layout='wide', initial_sidebar_state='auto')
+st.set_page_config(page_title='Credi Logic AI · Tu crédito, con claridad', page_icon='assets/favicon.png', layout='wide', initial_sidebar_state='collapsed')
 import interfaz
 
 # Los estilos no guardan estado: recargarlos evita conservar CSS anterior
@@ -145,7 +145,7 @@ if pagina == 'Evaluar solicitud':
     if r['estabilidad'] in ('MEDIA', 'BAJA'):
         st.info('Requiere revisión personal de un funcionario por la estabilidad laboral informada.')
     ancla('alternativa')
-    st.subheader('04 · ¿Podemos encontrar otra opción?')
+    st.markdown('### ¿Podemos encontrar otra opción?')
     if r['ejecutar_evolutiva'] or r['decision'] == 'REVISIÓN':
         st.write('Busca un monto y plazo que reduzcan el riesgo, manteniendo el perfil y la tasa.')
         solicitar = st.button('Generar contraoferta', type='primary', width='stretch', disabled=not r['ejecutar_evolutiva'])
@@ -157,7 +157,7 @@ if pagina == 'Evaluar solicitud':
     else:
         st.info('La búsqueda de alternativas se activa cuando tu resultado es REVISIÓN. Con aprobación ya cumples el umbral; con rechazo es necesario revisar el perfil primero.')
     ancla('comparacion')
-    st.subheader('05 · Compara antes de decidir')
+    st.subheader('04 · Compara antes de decidir')
     resultado = {'cliente': cliente, 'evaluacion': r}
     if 'contraoferta' in st.session_state:
         o = st.session_state['contraoferta']

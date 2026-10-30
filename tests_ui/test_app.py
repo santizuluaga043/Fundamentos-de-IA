@@ -55,7 +55,7 @@ class AppTestCase(unittest.TestCase):
     def test_marca_indice_y_bienvenida(self):
         at = self.abrir()
         html = '\n'.join(m.value for m in at.markdown)
-        for destino in ['perfil', 'resultado', 'explicacion', 'alternativa', 'comparacion']:
+        for destino in ['perfil', 'resultado', 'explicacion', 'comparacion']:
             self.assertIn(f'href="#{destino}"', html)
             self.assertIn(f'id="{destino}"', html)
         self.assertIn('cl-intro', html)

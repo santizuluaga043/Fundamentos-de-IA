@@ -60,4 +60,19 @@ def estilos_marca():
 .cl-risk{display:flex;gap:28px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;margin:16px 0}.cl-ring{width:132px;height:132px;flex-shrink:0;border-radius:50%;padding:9px;background:conic-gradient(var(--accent) var(--angle),var(--line) 0deg)}.cl-ring>div{background:var(--panel);height:100%;border-radius:50%;display:flex;flex-direction:column;justify-content:center;align-items:center}.cl-ring strong{font-size:30px;color:var(--ink);font-variant-numeric:tabular-nums}.cl-ring small{font-size:11px;color:var(--muted)}.cl-eyebrow{font-size:10px;letter-spacing:1.5px;color:var(--accent)}.cl-risk h3{margin:5px 0}.cl-risk p{font-size:14px;color:var(--muted);margin:0}
 @media(max-width:640px){.cl-welcome{padding:20px}.cl-risk{gap:15px;padding:16px}.cl-ring{width:95px;height:95px}.cl-ring strong{font-size:23px}.cl-risk h3{font-size:18px}.cl-finance-label{display:none}}
 @media(prefers-reduced-motion:reduce){.cl-finance{display:none!important}.cl-final{opacity:1!important;transform:none!important;animation:none!important}}
+
+[data-testid="stSidebar"][aria-expanded="true"]{width:312px!important}
+[data-testid="stMain"]{overflow-x:clip}
+.cl-welcome{height:calc(100svh - 64px);min-height:420px;width:100vw;max-width:none;left:50%;transform:translateX(-50%);justify-content:center;border:0;border-radius:0;margin-bottom:24px}
+.cl-welcome .cl-final .cl-brand{flex-direction:column;text-align:center;gap:24px}
+.cl-welcome .cl-final svg{width:110px;height:110px}
+.cl-welcome .cl-word{font-size:clamp(34px,5vw,64px)}
+.cl-welcome::after{content:"Desliza para explorar ↓";position:absolute;bottom:32px;color:var(--muted);font-size:14px}
+.block-container:has(.cl-welcome){padding-top:0}
+.cl-index{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding-bottom:34px}
+.cl-index a{position:relative;justify-content:center;min-height:80px;padding:18px;border-radius:18px}
+.cl-index svg{width:34px;height:34px;flex-shrink:0}
+.cl-tip{position:absolute;top:calc(100% + 5px);left:50%;transform:translateX(-50%);z-index:10;white-space:nowrap;background:var(--ink);color:var(--surface);padding:6px 8px;border-radius:8px;font-size:11px;opacity:0;visibility:hidden;pointer-events:none}
+.cl-index a:hover .cl-tip,.cl-index a:focus-visible .cl-tip{opacity:1;visibility:visible}
+@media(hover:none){.cl-tip{opacity:1;visibility:visible;font-size:10px}}
 </style>''', unsafe_allow_html=True)
