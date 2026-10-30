@@ -152,3 +152,13 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(at.session_state['version_motor'],'sprint4-mamdani-v1')
         self.assertNotIn('obsoleta',at.session_state['contraoferta'])
         self.assertEqual(evolucion.VERSION_MOTOR,riesgo.VERSION_MOTOR)
+
+    def test_actualizacion_recarga_indice_visual(self):
+        import importlib
+        import marca
+        del marca.indice
+        try:
+            at=self.abrir()
+            self.assertTrue(any('class="cl-tip"' in m.value for m in at.markdown))
+        finally:
+            importlib.reload(marca)

@@ -15,11 +15,13 @@ from evolucion import estrategia_evolutiva, utilidad_cliente, utilidad_prestamis
 
 st.set_page_config(page_title='Credi Logic AI · Tu crédito, con claridad', page_icon='assets/favicon.png', layout='wide', initial_sidebar_state='collapsed')
 import interfaz
+import marca
 
 # Los estilos no guardan estado: recargarlos evita conservar CSS anterior
 # cuando Community Cloud sincroniza nuevos archivos sin reiniciar el proceso.
 importlib.invalidate_caches()
 importlib.reload(interfaz)
+importlib.reload(marca)
 
 from interfaz import aplicar_tema, estilos_marca
 from marca import logo, bienvenida, indice, ancla, panorama
