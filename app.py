@@ -75,7 +75,7 @@ if pagina == 'Evaluar solicitud':
     ancla('perfil')
     st.caption('ACTUALIZACIÓN EN VIVO · Confirma cada valor con Enter o al salir del campo.')
     with st.container(border=True):
-        st.subheader('01 · Cuéntanos qué necesitas', anchor='titulo-perfil')
+        st.subheader('Cuéntanos qué necesitas', anchor='titulo-perfil')
         a,b,c = st.columns(3, gap='large')
         with a:
             nombre = st.text_input('Nombre', 'Caso de ejemplo', max_chars=80, key='alias')
@@ -110,7 +110,7 @@ if pagina == 'Evaluar solicitud':
     with guia:
         indice(r['decision'], 'contraoferta' in st.session_state, contenedor=guia)
     ancla('resultado')
-    st.subheader('02 · Este es tu resultado', anchor='titulo-resultado')
+    st.subheader('Este es tu resultado', anchor='titulo-resultado')
     panorama(r['riesgo'])
     a,b,c = st.columns(3)
     a.metric('Decisión', r['decision'])
@@ -125,7 +125,7 @@ if pagina == 'Evaluar solicitud':
     }
     mensaje(textos[r['decision']])
     ancla('explicacion')
-    st.subheader('03 · ¿Qué se tuvo en cuenta?', anchor='titulo-explicacion')
+    st.subheader('¿Qué se tuvo en cuenta?', anchor='titulo-explicacion')
     st.write('Miramos tu historial, tus obligaciones actuales y cuánto representa la nueva cuota en tus ingresos. La estabilidad laboral y los reportes también pueden aumentar el riesgo.')
     columnas = st.columns(3)
     etiquetas = [
@@ -159,7 +159,7 @@ if pagina == 'Evaluar solicitud':
     else:
         st.info('La búsqueda de alternativas se activa cuando tu resultado es REVISIÓN. Con aprobación ya cumples el umbral; con rechazo es necesario revisar el perfil primero.')
     ancla('comparacion')
-    st.subheader('04 · Compara antes de decidir', anchor='titulo-comparacion')
+    st.subheader('Compara antes de decidir', anchor='titulo-comparacion')
     resultado = {'cliente': cliente, 'evaluacion': r}
     if 'contraoferta' in st.session_state:
         o = st.session_state['contraoferta']
