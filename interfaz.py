@@ -76,3 +76,15 @@ def estilos_marca():
 .cl-index a:hover .cl-tip,.cl-index a:focus-visible .cl-tip{opacity:1;visibility:visible}
 @media(hover:none){.cl-tip{opacity:1;visibility:visible;font-size:10px}}
 </style>''', unsafe_allow_html=True)
+
+    # Reutilizar exactamente los símbolos del índice sin sustituir los títulos nativos.
+    from marca import DIBUJOS, SIMBOLO
+    from urllib.parse import quote
+    reglas = []
+    for nombre, dibujo in DIBUJOS.items():
+        svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="black" stroke-width="1.8">' + dibujo + '</svg>'
+        url = 'data:image/svg+xml,' + quote(svg, safe='')
+        reglas.append(f'.stApp #titulo-{nombre}::before{{content:"";display:inline-block;width:1.1em;height:1.1em;margin-right:.4em;vertical-align:-.15em;background:var(--accent);mask:url("{url}") center/contain no-repeat;-webkit-mask:url("{url}") center/contain no-repeat}}')
+    simbolo = 'data:image/svg+xml,' + quote(SIMBOLO, safe='')
+    reglas.append(f'.stApp #titulo-inicio::before{{content:"";display:inline-block;width:1em;height:1em;margin-right:.3em;vertical-align:-.1em;background:url("{simbolo}") center/contain no-repeat}}')
+    st.markdown('<style>' + ''.join(reglas) + '</style>', unsafe_allow_html=True)
