@@ -113,20 +113,28 @@ if pagina == 'Evaluar solicitud':
     st.subheader('Este es tu resultado', anchor='titulo-resultado')
     panorama(r['riesgo'])
     a,b,c = st.columns(3)
-    a.metric('Decisión', r['decision'])
+    a.metric('Decisión final', r['decision'])
+    a.caption(f"Evaluación financiera: {r['decision_financiera']}")
     b.metric('Riesgo global', f"{r['riesgo']:.2f} / 100", delta=delta, delta_color='inverse')
     c.metric('Cuota mensual', f"$ {r['cuota']:,.0f}")
-    st.progress(r['riesgo']/100, text='Aprobado ≤35 · Revisión >35 y <65 · Rechazado ≥65')
+    st.progress(r['riesgo']/100, text='Umbrales financieros: aprobado ≤35 · revisión >35 y <65 · rechazado ≥65')
     mensaje = {'APROBADO': st.success, 'REVISIÓN': st.warning, 'RECHAZADO': st.error}[r['decision']]
     textos = {
         'APROBADO': 'Tu solicitud cumple el umbral de aprobación de esta simulación.',
         'REVISIÓN': 'Tu solicitud necesita una segunda mirada. Podemos explorar otro monto o plazo.',
         'RECHAZADO': 'Tu solicitud no cumple el umbral de esta simulación. Revisa los factores de tu perfil antes de volver a evaluar.',
     }
+    if cliente['reportes_negativos'] >= 2:
+        textos['RECHAZADO'] = (f"Evaluación financiera: {r['decision_financiera']}. La decisión final es RECHAZADO por dos o más reportes negativos, independientemente del índice de riesgo.")
+    elif r['viable_financieramente'] and r['decision'] == 'REVISIÓN':
+        motivos = ' y '.join(r['motivos_revision'])
+        textos['REVISIÓN'] = (f'Evaluación financiera: APROBADO (riesgo {r["riesgo"]:.2f}/100). '
+                              f'La decisión final queda en REVISIÓN por {motivos}. '
+                              'Requiere validación personal de un funcionario; no es un rechazo financiero.')
     mensaje(textos[r['decision']])
     ancla('explicacion')
     st.subheader('¿Qué se tuvo en cuenta?', anchor='titulo-explicacion')
-    st.write('Miramos tu historial, tus obligaciones actuales y cuánto representa la nueva cuota en tus ingresos. La estabilidad laboral y los reportes también pueden aumentar el riesgo.')
+    st.write('Miramos tu historial, tus obligaciones actuales y cuánto representa la nueva cuota en tus ingresos. La estabilidad laboral y los reportes se revisan por separado y pueden requerir validación personal.')
     columnas = st.columns(3)
     etiquetas = [
         ('Tu historial', ['Por fortalecer', 'Intermedio', 'Favorable'], f"Score informado: {score}. Un valor mayor mejora este factor."),

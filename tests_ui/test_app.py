@@ -162,3 +162,22 @@ class AppTestCase(unittest.TestCase):
             self.assertTrue(any('class="cl-tip"' in m.value for m in at.markdown))
         finally:
             importlib.reload(marca)
+
+    def test_riesgo_bajo_distingue_aprobacion_y_revision_personal(self):
+        at=self.abrir()
+        at.number_input(key='score').set_value(900).run()
+        at.number_input(key='deuda').set_value(10.).run()
+        at.number_input(key='monto').set_value(1000000.).run()
+        self.assertEqual(at.metric[0].value,'APROBADO')
+        for campo in ['antiguedad','reportes']:
+            at.number_input(key=campo).set_value(1 if campo=='reportes' else 1.).run()
+            self.assertLess(at.session_state['evaluacion_actual']['riesgo'],35)
+            self.assertEqual(at.metric[0].value,'REVISIÓN')
+            self.assertTrue(any('Evaluación financiera: APROBADO' in w.value and 'funcionario' in w.value for w in at.warning))
+        at.number_input(key='reportes').set_value(2).run()
+        self.assertEqual(at.metric[0].value,'RECHAZADO')
+        self.assertTrue(any('por dos o más reportes negativos' in e.value for e in at.error))
+        at.number_input(key='antiguedad').set_value(4.).run()
+        at.number_input(key='reportes').set_value(0).run()
+        self.assertEqual(at.metric[0].value,'APROBADO')
+        self.assertEqual(len(at.exception),0)
