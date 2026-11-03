@@ -70,7 +70,7 @@ class Sprint4Test(unittest.TestCase):
         ref = referencia()
         ref['motor_inferencia'] = lambda c: ('APROBADO' if ref['calcular_riesgo_difuso'](c)<=35 else 'REVISIÓN','')
         c = dict(BASE,score=900,endeudamiento=20,reportes_negativos=1,antiguedad_empleo_actual=1)
-        self.assertTrue(evaluar_riesgo(c)['ejecutar_evolutiva'])
+        self.assertFalse(evaluar_riesgo(c)['ejecutar_evolutiva'])
         random.seed(42); esperado = ref['estrategia_evolutiva'](c)
         random.seed(42); actual = estrategia_evolutiva(c)
         self.assertEqual(actual,esperado)
@@ -83,7 +83,7 @@ class Sprint4Test(unittest.TestCase):
 
     def test_umbrales_de_activacion(self):
         for indice, ejecutar in [(35,False),(35.0001,True),(64.9999,True),(65,False)]:
-            with patch('riesgo.calcular_riesgo_difuso',return_value=indice):
+            with patch('riesgo.calcular_riesgo_difuso',side_effect=[indice,15.5]):
                 self.assertEqual(evaluar_riesgo(BASE)['ejecutar_evolutiva'],ejecutar)
 
     def test_rechazo_prevalece_sobre_revision_manual(self):
@@ -95,3 +95,13 @@ class Sprint4Test(unittest.TestCase):
             c=dict(BASE,**cambios)
             self.assertEqual(evaluar_riesgo(c)['riesgo'],50.)
             self.assertEqual(self.ref['calcular_riesgo_difuso'](c),50.)
+
+    def test_busqueda_solo_por_capacidad(self):
+        elegible=dict(BASE,score=900,endeudamiento=20)
+        self.assertTrue(evaluar_riesgo(elegible)['ejecutar_evolutiva'])
+        for cambios in [dict(reportes_negativos=1),dict(reportes_negativos=2),dict(antiguedad_empleo_actual=1),dict(score=400),dict(endeudamiento=60),dict(monto_credito=1000000)]:
+            with self.subTest(cambios=cambios):
+                r=evaluar_riesgo(dict(elegible,**cambios))
+                self.assertFalse(r['ejecutar_evolutiva'])
+                self.assertTrue(r['motivo_bloqueo_contraoferta'])
+        self.assertFalse(evaluar_riesgo(BASE)['ejecutar_evolutiva'])

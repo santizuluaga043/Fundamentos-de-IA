@@ -6,7 +6,7 @@ import riesgo
 import evolucion
 
 # Sincronizar también módulos conservados en memoria tras una actualización.
-if getattr(riesgo, "VERSION_MOTOR", None) != "sprint4-mamdani-v1":
+if getattr(riesgo, "VERSION_MOTOR", None) != "sprint4-mamdani-v2-capacidad":
     importlib.reload(riesgo)
 if getattr(evolucion, "VERSION_MOTOR", None) != riesgo.VERSION_MOTOR:
     importlib.reload(evolucion)
@@ -163,6 +163,8 @@ if pagina == 'Evaluar solicitud':
             with st.spinner('Evaluando alternativas…'):
                 st.session_state['contraoferta'] = buscar_contraoferta(cliente, VERSION_MOTOR)
                 st.session_state['perfil_oferta'] = cliente.copy()
+        if not r['ejecutar_evolutiva']:
+            st.info(r['motivo_bloqueo_contraoferta'])
         st.caption('Comparamos distintas combinaciones para buscar una cuota más manejable y conservar, en lo posible, el monto y el plazo que necesitas.')
     else:
         st.info('La búsqueda de alternativas se activa cuando tu resultado es REVISIÓN. Con aprobación ya cumples el umbral; con rechazo es necesario revisar el perfil primero.')
@@ -234,7 +236,7 @@ elif pagina == 'Cómo funciona':
     st.write('El índice difuso mide únicamente el perfil financiero. La estabilidad MEDIA o BAJA y un reporte negativo pueden cambiar APROBADO a REVISIÓN y requieren revisión personal de un funcionario, sin sumar puntos al índice. Dos o más reportes fuerzan RECHAZADO. Se conservan las funciones np.interp del notebook y su respaldo de 50 cuando no hay reglas activas, incluidos sus casos extremos.')
     st.write('APROBADO: riesgo ≤35 · REVISIÓN: 35<riesgo<65 · RECHAZADO: riesgo ≥65. Se compara el valor sin redondear.')
     st.subheader('Sprint 3 · Contraofertas (μ+λ)')
-    st.write('Se activa automáticamente cuando 35 < índice difuso < 65, incluso si también se requiere revisión personal. Cada perfil se procesa una sola vez; el botón reutiliza el resultado. Mantiene del 70 al 100 % del monto original y amplía el plazo hasta 240 meses. Padres y descendientes compiten juntos; sobreviven los mejores seis.')
+    st.write('Se activa automáticamente solo en revisión por capacidad de pago: 35 < índice difuso < 65, sin revisión personal ni reportes, y el mismo perfil debe aprobar financieramente al reducir la cuota a una carga baja. No se ejecuta si el score o el endeudamiento impiden la aprobación incluso con esa cuota. Cada perfil se procesa una sola vez; el botón reutiliza el resultado. Mantiene del 70 al 100 % del monto original y amplía el plazo hasta 240 meses. Padres y descendientes compiten juntos; sobreviven los mejores seis.')
     st.code('Fitness = 0.50 × capacidad + 0.25 × cercanía_monto\n        + 0.25 × cercanía_plazo − penalización\nPenalización = 0 si el índice difuso de la oferta ≤35; 1 en otro caso.\nLa revisión personal no penaliza el fitness ni desaparece con la contraoferta.')
     st.write('Se conservan las utilidades del notebook: cliente = 40 % monto + 30 % plazo + 30 % conveniencia de intereses; prestamista = 60 % capacidad + 40 % intereses relativos.')
     st.warning('Los pesos, pertenencias y umbrales no están calibrados con datos reales. El uso de edad y antigüedad heredado del notebook requiere revisión de equidad antes de cualquier aplicación real. La búsqueda es heurística y no garantiza un óptimo ni una oferta aprobada.')

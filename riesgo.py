@@ -6,7 +6,7 @@ from motor_sprint4 import (
     reglas as REGLAS, motor_inferencia as motor_notebook,
 )
 
-VERSION_MOTOR = 'sprint4-mamdani-v1'
+VERSION_MOTOR = 'sprint4-mamdani-v2-capacidad'
 
 def validar_cliente(c):
     campos = ('edad', 'ingreso_mensual', 'monto_credito', 'plazo', 'tasa_anual',
@@ -60,12 +60,26 @@ def evaluar_riesgo(cliente):
     revision_manual = bool(motivos)
     if revision_manual:
         explicacion += ' Requiere revisión personal de un funcionario por ' + ' y '.join(motivos) + '.'
+    # Aislar la cuota: el mismo perfil debe aprobar financieramente con una
+    # carga baja (<=15 %). Es diagnóstico, no una oferta ni otra búsqueda.
+    perfil_cuota_baja = dict(cliente, monto_credito=cliente['monto_credito'] * (1. if relacion <= 15 else 15. / relacion))
+    riesgo_cuota_baja = calcular_riesgo_difuso(perfil_cuota_baja)
+    ejecutar = (decision == 'REVISIÓN' and 35 < indice < 65
+                and not revision_manual and cliente['reportes_negativos'] == 0
+                and riesgo_cuota_baja <= 35)
+    if revision_manual:
+        bloqueo = 'La revisión corresponde a ' + ' y '.join(motivos) + '. Requiere validación de un funcionario; cambiar el monto o el plazo no resuelve esa condición.'
+    elif riesgo_cuota_baja > 35:
+        bloqueo = 'El score y el endeudamiento impiden alcanzar la aprobación aun con una cuota baja. La contraoferta no está disponible para este perfil.'
+    else:
+        bloqueo = 'La contraoferta solo está disponible para solicitudes en revisión por capacidad de pago.'
     return dict(riesgo=indice, base=indice, decision=decision, explicacion=explicacion,
                 cuota=cuota, relacion=relacion, membresias=membresias, reglas=reglas,
                 estabilidad=estabilidad, revision_manual=revision_manual,
                 motivos_revision=motivos, decision_financiera=decision_por_riesgo(indice),
                 viable_financieramente=indice <= 35,
-                ejecutar_evolutiva=35 < indice < 65)
+                ejecutar_evolutiva=ejecutar, riesgo_con_cuota_baja=riesgo_cuota_baja,
+                motivo_bloqueo_contraoferta=None if ejecutar else bloqueo)
 
 
 def motor_inferencia(cliente):

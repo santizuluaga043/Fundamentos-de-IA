@@ -2,8 +2,12 @@ import unittest
 from streamlit.testing.v1 import AppTest
 
 class AppTestCase(unittest.TestCase):
-    def abrir(self):
+    def abrir(self, capacidad=True):
         at = AppTest.from_file('app.py', default_timeout=30).run()
+        if capacidad:
+            at.number_input(key='score').set_value(900)
+            at.number_input(key='deuda').set_value(20.)
+            at.run()
         self.assertEqual(len(at.exception), 0)
         return at
 
@@ -26,14 +30,16 @@ class AppTestCase(unittest.TestCase):
     def test_precision_y_oferta_obsoleta(self):
         at = self.abrir()
         at.button[0].click().run()
-        riesgo = at.metric[1].value
+        membresias_antes = at.session_state['evaluacion_actual']['membresias']['Endeudamiento (bajo → alto)']
         at.number_input(key='deuda').set_value(42.75).run()
         self.assertEqual(at.number_input(key='deuda').value, 42.75)
-        self.assertNotEqual(at.metric[1].value, riesgo)
+        self.assertNotEqual(at.session_state['evaluacion_actual']['membresias']['Endeudamiento (bajo → alto)'], membresias_antes)
         self.assertEqual(at.session_state['perfil_oferta']['endeudamiento'], 42.75)
         self.assertTrue(any(m.label == 'Monto alternativo' for m in at.metric))
         at.number_input(key='score').set_value(701).run()
         self.assertEqual(at.number_input(key='score').value, 701)
+        self.assertNotIn('contraoferta', at.session_state)
+        self.assertTrue(at.button[0].disabled)
         self.assertEqual(len(at.slider), 0)
         self.assertEqual(len(at.exception), 0)
 
@@ -53,7 +59,7 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(len(at.button), 0)
 
     def test_marca_indice_y_bienvenida(self):
-        at = self.abrir()
+        at = self.abrir(capacidad=False)
         html = '\n'.join(m.value for m in at.markdown)
         for destino in ['perfil', 'resultado', 'explicacion', 'comparacion']:
             self.assertIn(f'href="#{destino}"', html)
@@ -66,13 +72,13 @@ class AppTestCase(unittest.TestCase):
 
     def test_perfil_persiste_entre_paginas(self):
         at = self.abrir()
-        at.number_input(key='deuda').set_value(42.75).run()
-        at.number_input(key='score').set_value(712).run()
+        at.number_input(key='deuda').set_value(21.).run()
+        at.number_input(key='score').set_value(912).run()
         at.button[0].click().run()
         at.sidebar.radio[0].set_value('Cómo funciona').run()
         at.sidebar.radio[0].set_value('Evaluar solicitud').run()
-        self.assertEqual(at.number_input(key='deuda').value, 42.75)
-        self.assertEqual(at.number_input(key='score').value, 712)
+        self.assertEqual(at.number_input(key='deuda').value, 21.)
+        self.assertEqual(at.number_input(key='score').value, 912)
         self.assertIn('contraoferta', at.session_state)
         self.assertEqual(len(at.exception), 0)
 
@@ -109,9 +115,9 @@ class AppTestCase(unittest.TestCase):
         at.number_input(key='reportes').set_value(1).run()
         at.number_input(key='antiguedad').set_value(1.).run()
         self.assertEqual(at.metric[0].value, 'REVISIÓN')
-        self.assertTrue(at.session_state['evaluacion_actual']['ejecutar_evolutiva'])
-        self.assertTrue(at.session_state['contraoferta']['evaluacion']['viable_financieramente'])
-        self.assertTrue(any('sujeta a la validación personal de un funcionario' in w.value for w in at.warning))
+        self.assertFalse(at.session_state['evaluacion_actual']['ejecutar_evolutiva'])
+        self.assertNotIn('contraoferta', at.session_state)
+        self.assertTrue(at.button[0].disabled)
         self.assertTrue(any('Requiere revisión personal de un funcionario' in i.value for i in at.info))
         at.number_input(key='monto').set_value(1000000.).run()
         self.assertEqual(at.metric[0].value, 'REVISIÓN')
@@ -149,7 +155,7 @@ class AppTestCase(unittest.TestCase):
         del evolucion.VERSION_MOTOR
         at.run()
         self.assertEqual(len(at.exception),0)
-        self.assertEqual(at.session_state['version_motor'],'sprint4-mamdani-v1')
+        self.assertEqual(at.session_state['version_motor'],'sprint4-mamdani-v2-capacidad')
         self.assertNotIn('obsoleta',at.session_state['contraoferta'])
         self.assertEqual(evolucion.VERSION_MOTOR,riesgo.VERSION_MOTOR)
 
@@ -181,3 +187,17 @@ class AppTestCase(unittest.TestCase):
         at.number_input(key='reportes').set_value(0).run()
         self.assertEqual(at.metric[0].value,'APROBADO')
         self.assertEqual(len(at.exception),0)
+
+    def test_revision_por_otros_factores_no_ejecuta_busqueda(self):
+        from unittest.mock import patch
+        import evolucion
+        with patch('evolucion.estrategia_evolutiva', wraps=evolucion.estrategia_evolutiva) as buscar:
+            at=self.abrir(capacidad=False)
+            self.assertEqual(at.metric[0].value,'REVISIÓN')
+            self.assertTrue(at.button[0].disabled)
+            self.assertTrue(any('score y el endeudamiento' in i.value for i in at.info))
+            self.assertEqual(buscar.call_count,0)
+            at.number_input(key='reportes').set_value(1).run()
+            self.assertTrue(at.button[0].disabled)
+            self.assertNotIn('contraoferta',at.session_state)
+            self.assertEqual(buscar.call_count,0)
