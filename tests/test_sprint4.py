@@ -90,11 +90,26 @@ class Sprint4Test(unittest.TestCase):
         for c in [dict(BASE,score=400,endeudamiento=90,monto_credito=80000000,reportes_negativos=1),dict(BASE,score=900,endeudamiento=10,monto_credito=1e6,reportes_negativos=2)]:
             self.assertEqual(evaluar_riesgo(c)['decision'],'RECHAZADO')
 
-    def test_sin_reglas_activas_conserva_respaldo_del_notebook(self):
-        for cambios in [dict(score=1000),dict(endeudamiento=100),dict(monto_credito=1e10)]:
+    def test_extremos_y_ausencia_de_reglas(self):
+        for cambios in [dict(score=1000,monto_credito=1000000,endeudamiento=10),dict(endeudamiento=100),dict(monto_credito=1e10)]:
             c=dict(BASE,**cambios)
-            self.assertEqual(evaluar_riesgo(c)['riesgo'],50.)
-            self.assertEqual(self.ref['calcular_riesgo_difuso'](c),50.)
+            r=evaluar_riesgo(c)
+            self.assertAlmostEqual(r['riesgo'],self.ref['calcular_riesgo_difuso'](c),places=10)
+            self.assertEqual(r['decision'],'APROBADO' if c['score']==1000 else 'RECHAZADO')
+        with patch('motor_sprint4.reglas',[]):
+            with self.assertRaisesRegex(ValueError,'No se activó ninguna regla difusa'):
+                evaluar_riesgo(BASE)
+        ref=referencia();ref['reglas']=[]
+        with self.assertRaisesRegex(ValueError,'No se activó ninguna regla difusa'):
+            ref['calcular_riesgo_difuso'](BASE)
+
+    def test_trapecios_escalares_y_vectores(self):
+        from motor_sprint4 import trapmf
+        for limites in [(0,0,20,40),(60,80,100,100),(0,0,100,100)]:
+            valores=np.array([-1,0,20,40,60,80,100,101])
+            np.testing.assert_allclose(trapmf(valores,*limites),self.ref['trapmf'](valores,*limites))
+        self.assertEqual(float(trapmf(1000,700,800,1000,1000)),1.)
+        self.assertEqual(float(trapmf(0,0,0,500,650)),1.)
 
     def test_busqueda_solo_por_capacidad(self):
         elegible=dict(BASE,score=900,endeudamiento=20)

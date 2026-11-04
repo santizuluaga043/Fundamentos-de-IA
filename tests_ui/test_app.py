@@ -155,7 +155,7 @@ class AppTestCase(unittest.TestCase):
         del evolucion.VERSION_MOTOR
         at.run()
         self.assertEqual(len(at.exception),0)
-        self.assertEqual(at.session_state['version_motor'],'sprint4-mamdani-v2-capacidad')
+        self.assertEqual(at.session_state['version_motor'],'sprint4-mamdani-v3-trapmf')
         self.assertNotIn('obsoleta',at.session_state['contraoferta'])
         self.assertEqual(evolucion.VERSION_MOTOR,riesgo.VERSION_MOTOR)
 
@@ -201,3 +201,15 @@ class AppTestCase(unittest.TestCase):
             self.assertTrue(at.button[0].disabled)
             self.assertNotIn('contraoferta',at.session_state)
             self.assertEqual(buscar.call_count,0)
+
+    def test_area_cero_muestra_error_sin_resultados_anteriores(self):
+        from unittest.mock import patch
+        at=self.abrir()
+        self.assertIn('contraoferta',at.session_state)
+        with patch('motor_sprint4.reglas',[]):
+            at.run()
+        self.assertTrue(any('No se activó ninguna regla difusa.' in e.value for e in at.error))
+        self.assertEqual(len(at.metric),0)
+        self.assertNotIn('contraoferta',at.session_state)
+        self.assertNotIn('evaluacion_actual',at.session_state)
+        self.assertEqual(len(at.exception),0)

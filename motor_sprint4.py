@@ -73,7 +73,17 @@ def trimf(x, a, b, c):
     return np.interp(x, [a, b, c], [0, 1, 0])
 
 def trapmf(x, a, b, c, d):
-    return np.interp(x, [a, b, c, d], [0, 1, 1, 0])
+    x = np.asarray(x)
+
+    resultado = np.interp(x, [a, b, c, d], [0, 1, 1, 0])
+
+    if a == b:
+        resultado = np.where(x <= b, 1, resultado)
+
+    if c == d:
+        resultado = np.where(x >= c, 1, resultado)
+
+    return resultado
 
 def fuzzificar_score(score):
     return {
@@ -170,7 +180,7 @@ def calcular_riesgo_difuso(cliente):
     area = np.trapezoid(agregado, universo)
 
     if area == 0:
-        return 50.0
+        raise ValueError("No se activó ninguna regla difusa.")
 
     indice = np.trapezoid(universo * agregado, universo) / area
 

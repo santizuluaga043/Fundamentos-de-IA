@@ -28,7 +28,8 @@ La estrategia se ejecuta automáticamente solo en revisión por capacidad de pag
 
 `evolucion.py` conserva la búsqueda, cuotas, utilidades, mutación, reparación y selección del notebook; la única excepción deliberada es el fitness solicitado: la penalización es cero si el riesgo difuso de la oferta ≤35 y uno en caso contrario, independientemente de la revisión personal. Semilla 42, μ=6, λ=12 y 50 generaciones; monto 70–100 % del original y plazo original–240 meses completos. Una oferta financieramente viable con revisión personal pendiente se anuncia como sujeta a validación de un funcionario. No se garantiza óptimo ni factibilidad.
 
-**Comportamiento heredado que se conserva:** `np.interp` con extremos repetidos produce pertenencia cero en algunos límites, como score 1000 y endeudamiento 100 %. Las cuotas/ingresos superiores al universo también pueden dejar todas las reglas inactivas. En esos casos el notebook devuelve **50**, y esta integración hace lo mismo para respetar la equivalencia. No se corrigieron silenciosamente estos casos ni los límites de plazo del algoritmo.
+**Actualización de pertenencias:** `trapmf` aplica `np.where` para mantener pertenencia 1 en los hombros cuando `a == b` o `c == d`, tanto en escalares como vectores. Se corrigen los límites de score 1000, endeudamiento 100 % y cuotas/ingresos superiores al límite del conjunto ALTO. Si el área agregada es cero, el motor lanza `ValueError("No se activó ninguna regla difusa.")`; ya no devuelve 50. Streamlit presenta el error y detiene esa evaluación. La versión del motor invalida las ofertas y cachés anteriores.
+
 
 Los notebooks se preservan en `notebooks/`. Sus programas interactivos no se ejecutan al importar la aplicación.
 
@@ -76,4 +77,4 @@ Tipografía: Nunito variable, distribuida localmente como WOFF2 (48,912 bytes) p
 
 Rama `feat/sprint4-motor`, basada en `a0e3e29`. El diseño, los recursos, el logo, la fuente y la navegación permanecen sin cambios. Solo se adaptan el motor, sus conexiones, los mensajes de revisión personal y las explicaciones técnicas autorizadas. El despliegue actual en `main` no se modifica al publicar esta rama.
 
-Validación: 14 pruebas del modelo y 13 de interfaz, incluyendo 104 perfiles comparados directamente con una carga independiente de funciones del notebook; reglas idénticas; búsqueda y fitness iguales al notebook con la excepción financiera solicitada; revisión exclusivamente personal, revisión combinada, rechazo prioritario, límites 35/65, respaldo de 50, cachés de versiones previas, una ejecución por perfil y un solo gráfico. El notebook se guarda íntegro en `notebooks/Sprint-4.ipynb`.
+Validación: 15 pruebas del modelo y 14 de interfaz, incluyendo 104 perfiles comparados directamente con una carga independiente de funciones del notebook; reglas idénticas; búsqueda y fitness iguales al notebook con la excepción financiera solicitada; revisión exclusivamente personal, revisión combinada, rechazo prioritario, límites 35/65, error de área cero y hombros trapezoidales, cachés de versiones previas, una ejecución por perfil y un solo gráfico. El notebook se guarda íntegro en `notebooks/Sprint-4.ipynb`.

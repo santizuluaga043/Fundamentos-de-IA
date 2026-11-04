@@ -6,7 +6,7 @@ from motor_sprint4 import (
     reglas as REGLAS, motor_inferencia as motor_notebook,
 )
 
-VERSION_MOTOR = 'sprint4-mamdani-v2-capacidad'
+VERSION_MOTOR = 'sprint4-mamdani-v3-trapmf'
 
 def validar_cliente(c):
     campos = ('edad', 'ingreso_mensual', 'monto_credito', 'plazo', 'tasa_anual',

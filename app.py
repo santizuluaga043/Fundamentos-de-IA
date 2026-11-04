@@ -3,10 +3,12 @@ import random
 import importlib
 import streamlit as st
 import riesgo
+import motor_sprint4
 import evolucion
 
 # Sincronizar también módulos conservados en memoria tras una actualización.
-if getattr(riesgo, "VERSION_MOTOR", None) != "sprint4-mamdani-v2-capacidad":
+if getattr(riesgo, "VERSION_MOTOR", None) != "sprint4-mamdani-v3-trapmf":
+    importlib.reload(motor_sprint4)
     importlib.reload(riesgo)
 if getattr(evolucion, "VERSION_MOTOR", None) != riesgo.VERSION_MOTOR:
     importlib.reload(evolucion)
@@ -97,6 +99,8 @@ if pagina == 'Evaluar solicitud':
     try:
         r = evaluar_riesgo(cliente)
     except ValueError as e:
+        for estado in ('contraoferta', 'perfil_oferta', 'evaluacion_actual', 'ultimo_riesgo'):
+            st.session_state.pop(estado, None)
         st.error(str(e))
         st.stop()
     st.session_state['evaluacion_actual'] = r
@@ -233,7 +237,7 @@ elif pagina == 'Cómo funciona':
     st.subheader('Sistema de inferencia difuso · Riesgo continuo')
     st.write('FIS Mamdani del Sprint 4: score, endeudamiento y cuota/ingreso tienen tres conjuntos superpuestos. Las 27 reglas usan AND mínimo, recorte de la salida y agregación por máximo. El índice se obtiene por centroide sobre 1001 puntos entre 0 y 100.')
     st.code('Score: BAJO trap(0,0,500,650), MEDIO tri(550,700,800), ALTO trap(700,800,1000,1000)\nDeuda (%): BAJO trap(0,0,25,45), MEDIO tri(30,50,70), ALTO trap(55,75,100,100)\nCuota/ingreso (%): BAJO trap(0,0,15,25), MEDIO tri(15,30,45), ALTO trap(35,50,100,100)\nRiesgo: BAJO trap(0,0,20,40), MEDIO tri(25,50,75), ALTO trap(60,80,100,100)')
-    st.write('El índice difuso mide únicamente el perfil financiero. La estabilidad MEDIA o BAJA y un reporte negativo pueden cambiar APROBADO a REVISIÓN y requieren revisión personal de un funcionario, sin sumar puntos al índice. Dos o más reportes fuerzan RECHAZADO. Se conservan las funciones np.interp del notebook y su respaldo de 50 cuando no hay reglas activas, incluidos sus casos extremos.')
+    st.write('El índice difuso mide únicamente el perfil financiero. La estabilidad MEDIA o BAJA y un reporte negativo pueden cambiar APROBADO a REVISIÓN y requieren revisión personal de un funcionario, sin sumar puntos al índice. Dos o más reportes fuerzan RECHAZADO. Las pertenencias trapezoidales conservan el valor 1 en los extremos planos. Si no se activa ninguna regla, se informa un error en lugar de asignar un riesgo de 50.')
     st.write('APROBADO: riesgo ≤35 · REVISIÓN: 35<riesgo<65 · RECHAZADO: riesgo ≥65. Se compara el valor sin redondear.')
     st.subheader('Sprint 3 · Contraofertas (μ+λ)')
     st.write('Se activa automáticamente solo en revisión por capacidad de pago: 35 < índice difuso < 65, sin revisión personal ni reportes, y el mismo perfil debe aprobar financieramente al reducir la cuota a una carga baja. No se ejecuta si el score o el endeudamiento impiden la aprobación incluso con esa cuota. Cada perfil se procesa una sola vez; el botón reutiliza el resultado. Mantiene del 70 al 100 % del monto original y amplía el plazo hasta 240 meses. Padres y descendientes compiten juntos; sobreviven los mejores seis.')
